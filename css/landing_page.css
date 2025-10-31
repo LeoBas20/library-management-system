@@ -1,0 +1,48 @@
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+/* Right side takes remaining half, scrollable if needed */
+.right-side {
+  margin-left: 70%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(30px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+@media (max-width: 768px) {
+  .left-side {
+    display: none;
+  }
+  .right-side {
+    margin-left: 0;
+    width: 100%;
+  }
+}
+
+.form-control {
+  border-radius: 5px;
+  padding: 10px;
+}
+
+.btn-signin {
+  background-color: #007bff;
+  color: white;
+  font-weight: 600;
+  border: none;
+}
+
+.btn-signin:hover {
+  background-color: #0056b3;
+  color: white;
+}
+
+.forgot {
+  font-size: 0.9rem;
+}

@@ -1,0 +1,49 @@
+html,
+body {
+  height: 100%;
+  background-color: #ffffff;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+main {
+  flex: 1;
+}
+
+.navbar {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.navbar .nav-link,
+.navbar-brand {
+  color: #555555;
+}
+
+.nav-link.active {
+  border-bottom: 2px solid #a30000;
+}
+
+.card {
+  border: 1px solid #d9d9d9;
+  border-radius: 6px;
+}
+
+.sidebar .list-group-item {
+  border: none;
+  background-color: #fff;
+}
+
+.sidebar .list-group-item:hover {
+  background-color: #f1f1f1;
+}
+
+footer {
+  background-color: #8c1b13;
+  color: #fff;
+}
