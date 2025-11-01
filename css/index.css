@@ -29,6 +29,10 @@ main {
   border-bottom: 2px solid #a30000;
 }
 
+.table-fixed {
+  table-layout: fixed;
+}
+
 .card {
   border: 1px solid #d9d9d9;
   border-radius: 6px;

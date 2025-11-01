@@ -27,8 +27,6 @@ if (isset($_POST['btnlogin'])) {
 }
 ?>
 
-
-
 <!doctype html>
 <html lang="en">
   <head>
@@ -83,12 +81,8 @@ if (isset($_POST['btnlogin'])) {
           </div>
         <?php endif; ?>
      
-
-        <!-- Forgot password -->
         <p class="forgot text-danger mt-3 mb-0">Forgot password?</p>
 
-
-        <!-- FOOTNOTE -->
         <p class="small text-muted mt-4 mb-0">
           By using this service, you understood and agree to the PUP Online Services
           <a href="https://www.pup.edu.ph/terms/">Terms of Use</a> and <a href="https://www.pup.edu.ph/privacy/">Privacy Statement</a>.
@@ -96,9 +90,6 @@ if (isset($_POST['btnlogin'])) {
       </div>
     </div>
 
-    
-
-    <!-- Bootstrap JS -->
     <script src="js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

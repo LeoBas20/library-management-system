@@ -20,16 +20,15 @@ $user_id = $user_id ?? $uid;
 $stud_name = $stud_name ?? 'Student';
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Library | Student Dashboard</title>
-  <link rel="stylesheet" href="css/datatables.min.css">
+  <title>Student Dashboard</title>
+  <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
 </head>
 <body>
@@ -49,70 +48,104 @@ $stud_name = $stud_name ?? 'Student';
     </div>
   </nav>
 
-  <!-- Main Content -->
-  <main>
-    <div class="container mt-4">
-      <h3 class="fw-bold">Home</h3>
-    <h5 class="text-danger fw-bold">
-      <?= htmlspecialchars($stud_name) ?> (<?= htmlspecialchars($user_id) ?>)
-    </h5>
+<!-- Main Content -->
+<main class="container my-5">
+  <div class="bg-light p-4 rounded-3 mb-4 shadow-sm">
+    <h2 class="fw-bold mb-1">Welcome back, <?= htmlspecialchars($stud_name) ?>!</h2>
+    <p class="text-muted mb-0">Here's an overview of your library activity.</p>
+  </div>
 
-
-
-
-      <div class="card mb-4 p-3">
-        <div class="d-flex align-items-center">
-          <div class="me-3">
-            <img src="https://cdn-icons-png.flaticon.com/512/337/337946.png" width="40" alt="">
-          </div>
-          <div>
-            <a href="#" class="fw-bold text-danger text-decoration-none">Library Borrowing Policy (PDF)</a>
-          </div>
-        </div>
-      </div>
-
-      <div class="row">
-        <!-- Sidebar -->
-        <div class="col-md-3">
-          <div class="card shadow-sm sidebar">
-            <div class="list-group list-group-flush">
-              <a href="#" class="list-group-item"><i class="bi bi-inbox me-2"></i>Inbox (3)</a>
-              <a href="#" class="list-group-item"><i class="bi bi-bookmark me-2"></i>Borrowed Books</a>
-              <a href="#" class="list-group-item"><i class="bi bi-chat-left-text me-2"></i>Submit Feedback</a>
-            </div>
-          </div>
-        </div>
-
-        <!-- Inbox Section -->
-        <div class="col-md-9">
-          <div class="card shadow-sm">
-            <div class="card-header bg-white fw-bold">Inbox</div>
-            <div class="card-body">
-              <table class="table table-hover">
-                <tbody>
-                  <tr>
-                    <td>October 20, 2025</td>
-                    <td>New Library Book Arrival: “Programming PHP, 2nd Edition”</td>
-                    <td><i class="bi bi-envelope text-danger"></i></td>
-                  </tr>
-                  <tr>
-                    <td>October 15, 2025</td>
-                    <td>Reminder: Return of Borrowed Books</td>
-                    <td><i class="bi bi-envelope text-danger"></i></td>
-                  </tr>
-                  <tr>
-                    <td>October 1, 2025</td>
-                    <td>Library Schedule Adjustment</td>
-                    <td><i class="bi bi-envelope text-danger"></i></td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
+  <?php
+  $total_borrowed = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='borrowed'"));
+  $total_returned = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='returned'"));
+  $total_overdue = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='borrowed' AND return_date < CURDATE()"));
+  ?>
+  <div class="row g-3">
+    <div class="col-6 col-md-4">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Borrowed Books</div>
+          <div class="display-6 fw-bold text-warning"><?= $total_borrowed ?></div>
         </div>
       </div>
     </div>
-  </main>
+
+    <div class="col-6 col-md-4">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Returned Books</div>
+          <div class="display-6 fw-bold text-success"><?= $total_returned ?></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-md-4">
+      <div class="card text-center shadow-sm h-100">
+        <div class="card-body">
+          <div class="text-muted small mb-1">Overdue Books</div>
+          <div class="display-6 fw-bold text-danger"><?= $total_overdue ?></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-5">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-0">Recent Borrowed Books</h4>
+      <a href="borrowed_books.php" class="btn btn-outline-primary btn-sm">
+        See all <i class="bi bi-arrow-right"></i>
+      </a>
+    </div>
+
+    <?php
+    $recent = mysqli_query($connection, "
+      SELECT t.*, b.title
+      FROM transactions t
+      JOIN books_db b ON t.book_id = b.book_id
+      WHERE t.user_id='$uid'
+      ORDER BY t.issue_date DESC
+      LIMIT 5
+    ");
+    ?>
+    <div class="table-responsive mt-3">
+      <table class="table table-striped table-bordered align-middle">
+        <thead class="table-light">
+          <tr>
+            <th style="width: 40%;">Book Title</th>
+            <th style="width: 20%;">Date Borrowed</th>
+            <th style="width: 20%;">Due Date</th>
+            <th style="width: 20%;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <?php if (mysqli_num_rows($recent) > 0): ?>
+            <?php while ($row = mysqli_fetch_assoc($recent)): ?>
+              <?php
+              $isOverdue = ($row['status'] == 'borrowed' && strtotime($row['return_date']) < time());
+              ?>
+              <tr>
+                <td><?= htmlspecialchars($row['title']) ?></td>
+                <td><?= htmlspecialchars($row['issue_date']) ?></td>
+                <td><?= htmlspecialchars($row['return_date']) ?></td>
+                <td>
+                  <?php if ($isOverdue): ?>
+                    <span class="badge bg-danger">Overdue</span>
+                  <?php elseif ($row['status'] == 'borrowed'): ?>
+                    <span class="badge bg-warning text-dark">Borrowed</span>
+                  <?php else: ?>
+                    <span class="badge bg-success">Returned</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endwhile; ?>
+          <?php else: ?>
+            <tr><td colspan="4" class="text-center text-muted py-3">No recent activity.</td></tr>
+          <?php endif; ?>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
 
   <footer class="text-center py-3 mt-5">
     <small>&copy; 2025 Library Management System | Student Dashboard</small>

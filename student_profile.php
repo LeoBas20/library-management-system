@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
-  <link rel="stylesheet" href="css/datatables.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
 
 <body>
@@ -110,6 +110,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <small>&copy; 2025 Library Management System | Student Dashboard</small>
   </footer>
 
-  <script src="js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const emailInput = document.querySelector('input[name="email"]');
+  const saveBtn = document.querySelector('button[type="submit"]');
+  const originalEmail = emailInput.value.trim();
+
+  saveBtn.disabled = true;
+
+  emailInput.addEventListener("input", function () {
+    if (emailInput.value.trim() !== originalEmail && emailInput.value.trim() !== "") {
+      saveBtn.disabled = false;
+    } else {
+      saveBtn.disabled = true;
+    }
+  });
+});
+</script>
+<script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

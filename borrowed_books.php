@@ -2,7 +2,6 @@
 session_start();
 include('dbcon.php');
 
-// Guard: only logged-in student
 if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
   header('Location: student_login.php');
   exit;
@@ -11,18 +10,15 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
 $uid = $_SESSION['user_id'];
 ?>
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Books</title>
+    <title>Student | Borrowed Books</title>
 
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
-    <link rel="stylesheet" href="css/datatables.min.css">
-
     <style>
         .container { margin-top: 50px; }
         tr.selectable{cursor:pointer;}
@@ -153,7 +149,6 @@ $uid = $_SESSION['user_id'];
                   <input id="modalBookName" type="text" class="form-control" readonly>
                 </div>
 
-                <!-- Hidden fields for server -->
                 <input type="hidden" id="modalBookId"  name="book_id">
                 <input type="hidden" id="modalTransId" name="transaction_id">
               </div>
@@ -177,7 +172,6 @@ $uid = $_SESSION['user_id'];
   <script src="js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // selection + modal population
     let selected = null;
     const rows = Array.from(document.querySelectorAll('tbody tr.selectable'));
     const borrowBtn = document.getElementById('openBorrowBtn');
@@ -195,7 +189,7 @@ $uid = $_SESSION['user_id'];
           transId: row.dataset.transId,
           title:   row.dataset.bookTitle
         };
-        borrowBtn.disabled = false; // enable for any selected borrowed row
+        borrowBtn.disabled = false;
       });
     });
 
