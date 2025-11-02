@@ -72,6 +72,7 @@ $admin_name = $admin['name'] ?? 'Admin';
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="admin_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="admin_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>        
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
       </ul>
@@ -81,12 +82,12 @@ $admin_name = $admin['name'] ?? 'Admin';
 
 
 <main>
-  <div class="container d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+  <div class="container d-flex justify-content-center align-items-center mt-5">
     <div class="col-md-9">
       <h2 class="fw-bold mb-3">Admin Profile</h2>
       <div class="card shadow-sm">
-        <div class="card-header bg-white fw-bold">
-          <h5 class="text-danger fw-bold mb-0">
+        <div class="card-header">
+          <h5 class="fw-bold mb-0">
             <?= htmlspecialchars($admin['name'] ?? 'Admin'); ?> (<?= htmlspecialchars($admin['user_id'] ?? 'N/A'); ?>)
           </h5>
         </div>

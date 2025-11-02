@@ -19,6 +19,7 @@ $uid = $_SESSION['user_id'];
 
     <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <style>
         .container { margin-top: 50px; }
         tr.selectable{cursor:pointer;}
@@ -29,19 +30,36 @@ $uid = $_SESSION['user_id'];
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid px-4">
-      <img src="img/pup_logo.png" alt="" style="height: 40px; width: auto; margin-right: 10px;">
-      <a class="navbar-brand fw-bold" href="#">Student Dashboard</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center">
+      <img src="img/pup_logo.png" alt="PUP Logo" style="height:40px;width:auto;margin-right:10px;">
+      <a class="navbar-brand fw-bold mb-0" href="students_dashboard.php">Student Dashboard</a>
+    </div>
+
+    <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="students_dashboard.php">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="books.php">Books</a></li>
-        <li class="nav-item"><a class="nav-link active" href="borrowed_books.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link" href="student_profile.php">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_dashboard.php">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_books.php">Books</a></li>
+        <li class="nav-item"><a class="nav-link active" href="student_borrowed_books.php">Borrowed</a></li>
       </ul>
     </div>
-  </nav>
+
+    <!-- Right: Dropdown -->
+    <div class="dropdown ms-3">
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="student_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="student_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
   <main>
     <div class="container">
@@ -56,15 +74,15 @@ $uid = $_SESSION['user_id'];
 
       <table class="table table-hover table-bordered table-striped">
         <thead>
-          <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>ISBN</th>
-            <th>Issued</th>
-            <th>Due</th>
-            <th>Days Left</th>
-            <th>Status</th>
-          </tr>
+        <tr>
+          <th style="width: 38%;">Title</th>
+          <th style="width: 18%;">Author</th>
+          <th style="width: 11%;">ISBN</th>
+          <th style="width: 9%;">Issued</th>
+          <th style="width: 9%;">Due</th>
+          <th style="width: 10%;">Days Left</th>
+          <th style="width: 5%;">Status</th>
+        </tr>
         </thead>
 
         <tbody>
@@ -123,7 +141,7 @@ $uid = $_SESSION['user_id'];
           else:
         ?>
           <tr>
-            <td colspan="7" class="text-center text-muted">No borrowed books found.</td>
+            <td colspan="7" class="text-center text-muted">No borrowed books.</td>
           </tr>
         <?php
           endif;
@@ -200,6 +218,5 @@ $uid = $_SESSION['user_id'];
       hiddenTransId.value = selected.transId || '';
     });
   </script>
-
 </body>
 </html>

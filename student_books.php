@@ -1,4 +1,15 @@
-<?php /* no auth code here to keep your structure; borrow_book.php will guard */ ?>
+<?php
+session_start();
+include('dbcon.php');
+
+// Guard: only logged-in student
+if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
+  header('Location: student_login.php');
+  exit;
+}
+
+$uid = $_SESSION['user_id'];
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +19,7 @@
 
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     .container{margin-top:50px;}
     tr.selectable{cursor:pointer;}
@@ -17,39 +29,48 @@
 
 <body>
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid px-4">
-      <img src="img/pup_logo.png" alt="" style="height:40px;width:auto;margin-right:10px;">
-      <a class="navbar-brand fw-bold" href="#">Student Dashboard</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center">
+      <img src="img/pup_logo.png" alt="PUP Logo" style="height:40px;width:auto;margin-right:10px;">
+      <a class="navbar-brand fw-bold mb-0" href="student_dashboard.php">Student Dashboard</a>
+    </div>
+
+    <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="students_dashboard.php">Home</a></li>
-        <li class="nav-item"><a class="nav-link active" href="books.php">Books</a></li>
-        <li class="nav-item"><a class="nav-link" href="borrowed_books.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link" href="student_profile.php">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_dashboard.php">Home</a></li>
+        <li class="nav-item"><a class="nav-link active" href="student_books.php">Books</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_borrowed_books.php">Borrowed</a></li>
       </ul>
     </div>
-  </nav>
+
+    <div class="dropdown ms-3">
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="student_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="student_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
   <main>
     <div class="container">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h2 class="m-0">Books</h2>
 
-        <!-- Search Form -->
         <form method="GET" class="d-flex" role="search">
-          <input
-            type="text"
-            name="search"
-            class="form-control me-2"
-            style="width:500px;"
-            placeholder="Search books..."
-            value="<?php if(isset($_GET['search'])) echo htmlspecialchars($_GET['search']); ?>"
-            required>
+          <input type="text" name="search" class="form-control me-2" style="width:500px;"
+                 placeholder="Search books..."
+                 value="<?php if(isset($_GET['search'])) echo htmlspecialchars($_GET['search']); ?>" required>
           <button type="submit" class="btn btn-primary">Search</button>
         </form>
 
-        <!-- Borrow button opens modal (enabled after row select) -->
         <button id="openBorrowBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#borrowModal" disabled>
           Borrow Book
         </button>
@@ -63,50 +84,57 @@
         </thead>
         <tbody>
           <?php
-            include('dbcon.php');
-
             $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-            if ($search !== '') {
-              $like = "%".$connection->real_escape_string($search)."%";
-              $sql = "SELECT book_id, title, author, isbn, quantity
-                      FROM books_db
-                      WHERE title LIKE '$like' OR author LIKE '$like' OR isbn LIKE '$like'
-                      ORDER BY title";
-            } else {
-              $sql = "SELECT book_id, title, author, isbn, quantity FROM books_db ORDER BY title";
-            }
+            $like = "%".$connection->real_escape_string($search)."%";
+
+            // Updated: Check transactions table for already borrowed books
+            $sql = "
+              SELECT b.book_id, b.title, b.author, b.isbn, b.quantity,
+                     CASE 
+                       WHEN t.book_id IS NOT NULL THEN 1 ELSE 0 
+                     END AS already_borrowed
+              FROM books_db b
+              LEFT JOIN transactions t
+                ON b.book_id = t.book_id AND t.user_id = '$uid' AND t.status = 'borrowed'
+              " . ($search !== '' ? 
+              "WHERE b.title LIKE '$like' OR b.author LIKE '$like' OR b.isbn LIKE '$like'" : '') . "
+              ORDER BY b.title";
+
             $result = $connection->query($sql);
             if(!$result){ die('Invalid Query: '.$connection->error); }
 
             if ($result->num_rows > 0) {
-                while($row = $result->fetch_assoc()){
+              while($row = $result->fetch_assoc()){
                 $quantity = (int)($row['quantity'] ?? 0);
-                $status   = ($quantity > 0) ? 'Available' : 'Not Available';
-
-                $rid     = (int)$row['book_id'];
-                $rtitle  = htmlspecialchars($row['title'] ?? '', ENT_QUOTES);
+                $status = ($quantity > 0) ? 'Available' : 'Not Available';
+                $rid = (int)$row['book_id'];
+                $rtitle = htmlspecialchars($row['title'] ?? '', ENT_QUOTES);
                 $rauthor = htmlspecialchars($row['author'] ?? '', ENT_QUOTES);
-                $risbn   = htmlspecialchars($row['isbn'] ?? '', ENT_QUOTES);
+                $risbn = htmlspecialchars($row['isbn'] ?? '', ENT_QUOTES);
 
-                echo '<tr class="selectable"
-                            data-book-id="'.$rid.'"
-                            data-book-title="'.$rtitle.'"
-                            data-available="'.$quantity.'">
+                $disabled = $row['already_borrowed'] ? 'disabled' : '';
+                $extra_class = $row['already_borrowed'] ? 'disabled' : 'selectable';
+                $display_status = $row['already_borrowed'] ? 'Already Borrowed' : $status;
+
+                echo '<tr class="'.$extra_class.'" 
+                          data-book-id="'.$rid.'" 
+                          data-book-title="'.$rtitle.'" 
+                          data-available="'.$quantity.'" 
+                          '.$disabled.'>
                         <td>'.$rtitle.'</td>
                         <td>'.$rauthor.'</td>
                         <td>'.$risbn.'</td>
-                        <td>'.$status.'</td>
+                        <td>'.$display_status.'</td>
                         <td>'.$quantity.'</td>
-                        </tr>';
-                }
+                      </tr>';
+              }
             } else {
-                        echo "<tr><td colspan='7' class='text-center text-danger'>No Record Found</td></tr>";
-                    }
+              echo "<tr><td colspan='7' class='text-center text-danger'>No Record Found</td></tr>";
+            }
           ?>
         </tbody>
       </table>
 
-      <!-- Modal (posts to borrow_book.php) -->
       <form action="borrow_book.php" method="POST">
         <div class="modal fade" id="borrowModal" tabindex="-1" aria-labelledby="borrowModalLabel" aria-hidden="true">
           <div class="modal-dialog">
@@ -124,11 +152,10 @@
 
                 <div class="mb-1">
                   <label class="form-label">Quantity</label>
-                  <input id="modalQty" type="number" name="qty" class="form-control" min="1" required>
+                  <input id="modalQty" type="number" name="qty" class="form-control" min="1" max="1" value="1" readonly required>
                 </div>
-                <div class="text-muted small">Available: <span id="modalAvail">0</span></div>
+                <div class="text-muted small">Only 1 book allowed per borrow</div>
 
-                <!-- Hidden -->
                 <input type="hidden" id="modalBookId" name="book_id">
                 <input type="hidden" id="modalAvailable" name="available">
               </div>
@@ -142,7 +169,6 @@
         </div>
       </form>
     </div>
-
   </main>
 
   <footer class="text-center py-3 mt-5">
@@ -151,23 +177,18 @@
 
   <script src="js/bootstrap.bundle.min.js"></script>
   <script>
-    // reset to full list when clearing search
-    const searchBox = document.querySelector('input[name="search"]');
-    searchBox.addEventListener('input', () => { if (searchBox.value === '') window.location = 'books.php'; });
-
-    // selection + modal population
-    let selected = null;
     const rows = Array.from(document.querySelectorAll('tbody tr.selectable'));
     const borrowBtn = document.getElementById('openBorrowBtn');
-
     const bookNameInput = document.getElementById('modalBookName');
-    const qtyInput      = document.getElementById('modalQty');
-    const availSpan     = document.getElementById('modalAvail');
-    const hiddenBookId  = document.getElementById('modalBookId');
-    const hiddenAvail   = document.getElementById('modalAvailable');
+    const qtyInput = document.getElementById('modalQty');
+    const hiddenBookId = document.getElementById('modalBookId');
+    const hiddenAvail = document.getElementById('modalAvailable');
+
+    let selected = null;
 
     rows.forEach(row => {
       row.addEventListener('click', () => {
+        if (row.classList.contains('disabled')) return; // prevent selecting borrowed
         rows.forEach(r => r.classList.remove('table-active'));
         row.classList.add('table-active');
         selected = {
@@ -179,31 +200,12 @@
       });
     });
 
-    borrowBtn.addEventListener('click', (e) => {
+    borrowBtn.addEventListener('click', e => {
       if (!selected) { e.preventDefault(); alert('Please select a book row first.'); return; }
       bookNameInput.value = selected.title;
       hiddenBookId.value  = selected.id;
       hiddenAvail.value   = selected.available;
-      availSpan.textContent = selected.available;
-
-      if (selected.available > 0) {
-        qtyInput.min = 1;
-        qtyInput.max = selected.available;
-        qtyInput.value = 1;
-        qtyInput.removeAttribute('readonly');
-      } else {
-        qtyInput.value = 0;
-        qtyInput.min = 0; qtyInput.max = 0;
-        qtyInput.setAttribute('readonly','readonly');
-      }
-    });
-
-    qtyInput?.addEventListener('input', () => {
-      const a = parseInt(hiddenAvail.value || '0', 10);
-      let v = parseInt(qtyInput.value || '0', 10);
-      if (isNaN(v) || v < 1) v = 1;
-      if (v > a) v = a;
-      qtyInput.value = v;
+      qtyInput.value = 1;
     });
   </script>
 </body>

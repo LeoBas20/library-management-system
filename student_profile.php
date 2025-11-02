@@ -43,29 +43,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 
 <body>
-  <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid px-4">
-      <img src="img/pup_logo.png" alt="" style="height:40px;width:auto;margin-right:10px;">
-      <a class="navbar-brand fw-bold" href="#">Student Dashboard</a>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center">
+      <img src="img/pup_logo.png" alt="PUP Logo" style="height:40px;width:auto;margin-right:10px;">
+      <a class="navbar-brand fw-bold mb-0" href="students_dashboard.php">Student Dashboard</a>
+    </div>
+
+    <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link" href="students_dashboard.php">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="books.php">Books</a></li>
-        <li class="nav-item"><a class="nav-link" href="borrowed_books.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link active" href="student_profile.php">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_dashboard.php">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_books.php">Books</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_borrowed_books.php">Borrowed</a></li>
       </ul>
     </div>
-  </nav>
+
+    <!-- Right: Dropdown -->
+    <div class="dropdown ms-3">
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="student_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="student_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
 
  <!-- Main Content -->
 <main>
-  <div class="container d-flex justify-content-center align-items-center" style="min-height: 50vh;">
+  <div class="container d-flex justify-content-center align-items-center mt-5">
     <div class="col-md-9">
-      <h2>Personal Data</h2>
+      <h2 class="fw-bold mb-3">Personal Data</h2>
       <div class="card shadow-sm">
         <div class="card-header bg-white fw-bold">
-            <h5 class="text-danger fw-bold mb-0">
+            <h5 class="fw-bold mb-0">
             <?= htmlspecialchars($user['name'] ?? 'Student'); ?> (<?= htmlspecialchars($user['user_id'] ?? 'N/A'); ?>)
             </h5>
         </div>

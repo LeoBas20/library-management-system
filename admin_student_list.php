@@ -45,7 +45,7 @@ if ($row = mysqli_fetch_assoc($result)) {
         <li class="nav-item"><a class="nav-link" href="admin_books.php">Books</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_borrowed_list.php">Borrowed</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_overdue_list.php">Overdue</a></li>
-        <li class="nav-item"><a class="nav-link active" href="admin_manage_students.php">Students</a></li>
+        <li class="nav-item"><a class="nav-link active" href="admin_student_list.php">Students</a></li>
       </ul>
     </div>
 
@@ -55,6 +55,7 @@ if ($row = mysqli_fetch_assoc($result)) {
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="admin_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="admin_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>        
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
       </ul>

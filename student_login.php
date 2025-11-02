@@ -16,7 +16,7 @@ if (isset($_POST['btnlogin'])) {
             $_SESSION['user_id'] = $row['user_id'];
             $_SESSION['role'] = $row['role'];
 
-            header("Location: students_dashboard.php");
+            header("Location: student_dashboard.php");
             exit();
         } else {
             $error = "Incorrect password.";

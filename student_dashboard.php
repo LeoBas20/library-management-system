@@ -34,22 +34,39 @@ $stud_name = $stud_name ?? 'Student';
 <body>
 
   <!-- Navbar -->
-  <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <div class="container-fluid px-4">
-    <img src="img/pup_logo.png" alt="" style="height: 40px; width: auto; margin-right: 10px;">
-      <a class="navbar-brand fw-bold" href="#">Student Dashboard</a>
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+  <div class="container-fluid px-4">
+    <div class="d-flex align-items-center">
+      <img src="img/pup_logo.png" alt="PUP Logo" style="height:40px;width:auto;margin-right:10px;">
+      <a class="navbar-brand fw-bold mb-0" href="students_dashboard.php">Student Dashboard</a>
+    </div>
+
+    <div class="collapse navbar-collapse">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-        <li class="nav-item"><a class="nav-link active" href="students_dashboard.php">Home</a></li>
-        <li class="nav-item"><a class="nav-link" href="books.php">Books</a></li>
-        <li class="nav-item"><a class="nav-link" href="borrowed_books.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link" href="student_profile.php">Profile</a></li>
-        <li class="nav-item"><a class="nav-link" href="logout.php">Logout</a></li>
+        <li class="nav-item"><a class="nav-link active" href="student_dashboard.php">Home</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_books.php">Books</a></li>
+        <li class="nav-item"><a class="nav-link" href="student_borrowed_books.php">Borrowed</a></li>
       </ul>
     </div>
-  </nav>
+
+    <!-- Right: Dropdown -->
+    <div class="dropdown ms-3">
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
+        <i class="bi bi-person-circle"></i>
+      </button>
+      <ul class="dropdown-menu dropdown-menu-end">
+        <li><a class="dropdown-item" href="student_profile.php"><i class="bi bi-person"></i> Profile</a></li>
+        <li><a class="dropdown-item" href="student_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>
+        <li><hr class="dropdown-divider"></li>
+        <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
 
 <!-- Main Content -->
-<main class="container my-5">
+<main class="container my-4">
   <div class="bg-light p-4 rounded-3 mb-4 shadow-sm">
     <h2 class="fw-bold mb-1">Welcome back, <?= htmlspecialchars($stud_name) ?>!</h2>
     <p class="text-muted mb-0">Here's an overview of your library activity.</p>
@@ -92,7 +109,7 @@ $stud_name = $stud_name ?? 'Student';
   <div class="mt-5">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0">Recent Borrowed Books</h4>
-      <a href="borrowed_books.php" class="btn btn-outline-primary btn-sm">
+      <a href="student_borrowed_books.php" class="btn btn-outline-primary btn-sm">
         See all <i class="bi bi-arrow-right"></i>
       </a>
     </div>

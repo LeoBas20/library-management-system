@@ -12,7 +12,7 @@ $uid = (string)($_SESSION['user_id']);     // users.user_id is VARCHAR(20)
 $bid = (int)($_POST['book_id'] ?? 0);
 $qty = (int)($_POST['qty'] ?? 0);
 
-if ($bid <= 0 || $qty <= 0) { header('Location: books.php?err=badinput'); exit; }
+if ($bid <= 0 || $qty <= 0) { header('Location: student_books.php?err=badinput'); exit; }
 
 try {
   $connection->begin_transaction();
@@ -38,10 +38,10 @@ try {
   $i->execute();
 
   $connection->commit();
-  header('Location: books.php?ok=1'); exit;
+  header('Location: student_books.php?ok=1'); exit;
 
 } catch (Throwable $e) {
   $connection->rollback();
   $code = ($e->getMessage() === 'insufficient') ? 'insufficient' : 'dberror';
-  header('Location: books.php?err='.$code); exit;
+  header('Location: student_books.php?err='.$code); exit;
 }
