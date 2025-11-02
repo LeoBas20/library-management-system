@@ -87,7 +87,7 @@ if ($row = mysqli_fetch_assoc($result)) {
     </div>
 
     <table class="table table-striped table-bordered align-middle">
-      <thead">
+      <thead>
         <tr>
           <th style="width: 45%;">Book Title</th>
           <th style="width: 20%;">Student</th>

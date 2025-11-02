@@ -177,6 +177,12 @@ $uid = $_SESSION['user_id'];
 
   <script src="js/bootstrap.bundle.min.js"></script>
   <script>
+  const searchBox = document.querySelector('input[name="search"]');
+  searchBox.addEventListener('input', () => {
+    if (searchBox.value === '') window.location = 'student_books.php';
+  });
+  </script>
+  <script>
     const rows = Array.from(document.querySelectorAll('tbody tr.selectable'));
     const borrowBtn = document.getElementById('openBorrowBtn');
     const bookNameInput = document.getElementById('modalBookName');
