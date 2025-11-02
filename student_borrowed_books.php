@@ -34,7 +34,7 @@ $uid = $_SESSION['user_id'];
   <div class="container-fluid px-4">
     <div class="d-flex align-items-center">
       <img src="img/pup_logo.png" alt="PUP Logo" style="height:40px;width:auto;margin-right:10px;">
-      <a class="navbar-brand fw-bold mb-0" href="students_dashboard.php">Student Dashboard</a>
+      <a class="navbar-brand fw-bold mb-0" href="student_dashboard.php">Student Dashboard</a>
     </div>
 
     <div class="collapse navbar-collapse">
