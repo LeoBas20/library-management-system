@@ -15,6 +15,17 @@ $result = mysqli_query($connection, "SELECT name FROM users WHERE user_id='$uid'
 if ($row = mysqli_fetch_assoc($result)) {
   $admin_name = $row['name'];
 }
+
+// Automatically mark overdue books
+mysqli_query($connection, "UPDATE transactions 
+                           SET status='overdue' 
+                           WHERE status='borrowed' 
+                           AND return_date < CURDATE()");
+
+// Determine status filter (borrowed by default)
+$status = $_GET['status'] ?? 'borrowed';
+$allowed_status = ['borrowed', 'overdue'];
+if (!in_array($status, $allowed_status)) $status = 'borrowed';
 ?>
 
 <!DOCTYPE html>
@@ -22,19 +33,14 @@ if ($row = mysqli_fetch_assoc($result)) {
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Library | Borrowed Books</title>
+  <title>Library | Borrowed & Overdue Books</title>
 
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 
-  <style>
-    /* Allow long titles to wrap and avoid horizontal scroll */
-    .table td, .table th {
-      white-space: normal !important;
-      word-wrap: break-word;
-    }
-  </style>
+
 </head>
 <body>
 
@@ -51,7 +57,8 @@ if ($row = mysqli_fetch_assoc($result)) {
         <li class="nav-item"><a class="nav-link" href="admin_dashboard.php">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_books.php">Books</a></li>
         <li class="nav-item"><a class="nav-link active" href="admin_borrowed_list.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link" href="admin_overdue_list.php">Overdue</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin_pending_list.php">Request</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin_rejected_list.php">Rejected</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_student_list.php">Students</a></li>
       </ul>
     </div>
@@ -73,63 +80,68 @@ if ($row = mysqli_fetch_assoc($result)) {
 <!-- Main Content -->
 <main class="container my-5">
   <div>
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="fw-bold mb-0">Borrowed Books</h2>
+    <div class="mb-3">
+      <h2 class="fw-bold mb-2">Borrowed Books</h2>
 
-      <form method="GET" class="d-flex" role="search">
-        <input type="text" name="search" class="form-control me-2" style="width:500px;"
-          placeholder="Search borrowed books..."
-          value="<?= isset($_GET['search']) ? htmlspecialchars($_GET['search']) : '' ?>">
-        <button type="submit" class="btn btn-primary">
-          <i class="bi bi-search me-1"></i> Search
-        </button>
-      </form>
+      <div class="book-filter">
+        <form method="GET" class="m-0">
+          <select name="status" class="form-select form-select-sm shadow-sm" 
+            style="width:180px;" onchange="this.form.submit()">
+            <option value="borrowed" <?= $status === 'borrowed' ? 'selected' : '' ?>>Borrowed</option>
+            <option value="overdue" <?= $status === 'overdue' ? 'selected' : '' ?>>Overdue</option>
+          </select>
+        </form>
+      </div>
     </div>
 
-    <table class="table table-striped table-bordered align-middle">
-      <thead>
+    <div class="table-responsive">
+      <table id="myTable" class="table table-striped table-bordered align-middle" style="width:100%;">
+        <thead>
         <tr>
-          <th style="width: 45%;">Book Title</th>
-          <th style="width: 20%;">Student</th>
-          <th style="width: 15%;">Date Borrowed</th>
-          <th style="width: 15%;">Due Date</th>
-          <th style="width: 5%;">Status</th>
+          <th style="width:40%;">Title</th>
+          <th style="width:17%;">Student</th>
+          <th style="width:11%;">Request Date</th>
+          <th style="width:12%;">Borrowed Date</th>
+          <th style="width:10%;">Due Date</th>
+          <th style="width:10%;">Status</th>
         </tr>
-      </thead>
-      <tbody>
-        <?php
-        $search = mysqli_real_escape_string($connection, $_GET['search'] ?? '');
-        $query = "
-          SELECT b.title, u.name AS student, t.issue_date, t.return_date, t.status
-          FROM transactions t
-          INNER JOIN books_db b ON t.book_id = b.book_id
-          INNER JOIN users u ON t.user_id = u.user_id
-          WHERE t.status = 'borrowed'
-        ";
+        </thead>
+        <tbody>
+          <?php
+          $query = "
+            SELECT 
+              b.title,
+              u.name AS student,
+              t.request_date,
+              t.issue_date,
+              t.return_date,
+              t.status
+            FROM transactions t
+            INNER JOIN books_db b ON t.book_id = b.book_id
+            INNER JOIN users u ON t.user_id = u.user_id
+            WHERE t.status = '$status'
+            ORDER BY t.issue_date DESC
+          ";
 
-        if (!empty($search)) {
-          $query .= " AND (b.title LIKE '%$search%' OR u.name LIKE '%$search%')";
-        }
+          $result = mysqli_query($connection, $query);
 
-        $query .= " ORDER BY t.issue_date DESC";
-        $result = mysqli_query($connection, $query);
-
-        if (mysqli_num_rows($result) > 0) {
-          while ($row = mysqli_fetch_assoc($result)) {
-            echo "<tr>";
-            echo "<td>" . htmlspecialchars($row['title']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['student']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['issue_date']) . "</td>";
-            echo "<td>" . htmlspecialchars($row['return_date']) . "</td>";
-            echo "<td><span class='badge bg-warning text-dark'>" . htmlspecialchars(ucfirst($row['status'])) . "</span></td>";
-            echo "</tr>";
+          if (mysqli_num_rows($result) > 0) {
+            while ($row = mysqli_fetch_assoc($result)) {
+              $badgeClass = ($row['status'] === 'overdue') ? 'bg-danger' : 'bg-warning text-dark';
+              echo '<tr>
+                      <td>' . htmlspecialchars($row['title']) . '</td>
+                      <td>' . htmlspecialchars($row['student']) . '</td>
+                      <td>' . htmlspecialchars($row['request_date']) . '</td>
+                      <td>' . htmlspecialchars($row['issue_date']) . '</td>
+                      <td>' . htmlspecialchars($row['return_date']) . '</td>
+                      <td><span class="badge ' . $badgeClass . '">' . ucfirst($row['status']) . '</span></td>
+                    </tr>';
+            }
           }
-        } else {
-          echo "<tr><td colspan='5' class='text-center text-danger py-3'>No borrowed books found</td></tr>";
-        }
-        ?>
-      </tbody>
-    </table>
+          ?>
+        </tbody>
+      </table>
+    </div>
   </div>
 </main>
 
@@ -138,11 +150,17 @@ if ($row = mysqli_fetch_assoc($result)) {
 </footer>
 
 <script src="js/bootstrap.bundle.min.js"></script>
+<script src="js/datatables.min.js"></script>
 <script>
-  const searchBox = document.querySelector('input[name="search"]');
-  searchBox.addEventListener('input', () => {
-    if (searchBox.value === '') window.location = 'admin_borrowed_list.php';
+$(document).ready(function() {
+  $('#myTable').DataTable({
+    order: [[3, 'desc']], // Sort by Borrowed Date
+    pageLength: 10,
+    language: {
+      emptyTable: "No records found."
+    }
   });
+});
 </script>
 
 </body>

@@ -102,7 +102,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <li class="nav-item"><a class="nav-link" href="admin_dashboard.php">Home</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_books.php">Books</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_borrowed_list.php">Borrowed</a></li>
-        <li class="nav-item"><a class="nav-link" href="admin_overdue_list.php">Overdue</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin_pending_list.php">Request</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin_rejected_list.php">Rejected</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_student_list.php">Students</a></li>
       </ul>
     </div>

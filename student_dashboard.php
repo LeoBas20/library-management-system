@@ -3,12 +3,13 @@ session_start();
 require 'dbcon.php';
 
 if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
-  header('Location: login.php');
+  header('Location: student_login.php');
   exit;
 }
 
 $uid = $_SESSION['user_id'];
 
+// Fetch student info
 $stmt = mysqli_prepare($connection, "SELECT user_id, name FROM users WHERE user_id = ? LIMIT 1");
 mysqli_stmt_bind_param($stmt, "s", $uid);
 mysqli_stmt_execute($stmt);
@@ -18,22 +19,34 @@ mysqli_stmt_close($stmt);
 
 $user_id = $user_id ?? $uid;
 $stud_name = $stud_name ?? 'Student';
-?>
 
+// Auto-update overdue
+mysqli_query($connection, "
+  UPDATE transactions
+  SET status = 'overdue'
+  WHERE user_id = '$uid'
+    AND status = 'borrowed'
+    AND return_date < CURDATE()
+");
+
+// Counts
+$total_borrowed = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='borrowed'"));
+$total_returned = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='returned'"));
+$total_overdue  = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='overdue'"));
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Student Dashboard</title>
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
 </head>
 <body>
 
-  <!-- Navbar -->
+<!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid px-4">
     <div class="d-flex align-items-center">
@@ -49,9 +62,8 @@ $stud_name = $stud_name ?? 'Student';
       </ul>
     </div>
 
-    <!-- Right: Dropdown -->
     <div class="dropdown ms-3">
-      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center"
               type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="bi bi-person-circle"></i>
       </button>
@@ -65,18 +77,13 @@ $stud_name = $stud_name ?? 'Student';
   </div>
 </nav>
 
-<!-- Main Content -->
+<!-- Main -->
 <main class="container my-4">
   <div class="bg-light p-4 rounded-3 mb-4 shadow-sm">
     <h2 class="fw-bold mb-1">Welcome back, <?= htmlspecialchars($stud_name) ?>!</h2>
     <p class="text-muted mb-0">Here's an overview of your library activity.</p>
   </div>
 
-  <?php
-  $total_borrowed = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='borrowed'"));
-  $total_returned = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='returned'"));
-  $total_overdue = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM transactions WHERE user_id='$uid' AND status='borrowed' AND return_date < CURDATE()"));
-  ?>
   <div class="row g-3">
     <div class="col-6 col-md-4">
       <div class="card text-center shadow-sm h-100">
@@ -106,6 +113,7 @@ $stud_name = $stud_name ?? 'Student';
     </div>
   </div>
 
+  <!-- Recent Transactions -->
   <div class="mt-5">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0">Recent Borrowed Books</h4>
@@ -120,7 +128,7 @@ $stud_name = $stud_name ?? 'Student';
       FROM transactions t
       JOIN books_db b ON t.book_id = b.book_id
       WHERE t.user_id='$uid'
-      ORDER BY t.issue_date DESC
+      ORDER BY t.id DESC
       LIMIT 5
     ");
     ?>
@@ -128,31 +136,34 @@ $stud_name = $stud_name ?? 'Student';
       <table class="table table-striped table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th style="width: 40%;">Book Title</th>
-            <th style="width: 20%;">Date Borrowed</th>
-            <th style="width: 20%;">Due Date</th>
-            <th style="width: 20%;">Status</th>
+            <th style="width:40%;">Book Title</th>
+            <th style="width:20%;">Date Borrowed</th>
+            <th style="width:20%;">Due Date</th>
+            <th style="width:20%;">Status</th>
           </tr>
         </thead>
         <tbody>
           <?php if (mysqli_num_rows($recent) > 0): ?>
             <?php while ($row = mysqli_fetch_assoc($recent)): ?>
               <?php
-              $isOverdue = ($row['status'] == 'borrowed' && strtotime($row['return_date']) < time());
+              $status = strtolower($row['status']);
+              $badge = match($status) {
+              'pending'  => 'bg-secondary text-white', 
+              'borrowed' => 'bg-warning text-dark',     
+              'returned' => 'bg-success text-white',    
+              'overdue'  => 'bg-danger text-white',      
+              'rejected' => 'bg-dark text-white'
+              };
               ?>
               <tr>
                 <td><?= htmlspecialchars($row['title']) ?></td>
-                <td><?= htmlspecialchars($row['issue_date']) ?></td>
-                <td><?= htmlspecialchars($row['return_date']) ?></td>
                 <td>
-                  <?php if ($isOverdue): ?>
-                    <span class="badge bg-danger">Overdue</span>
-                  <?php elseif ($row['status'] == 'borrowed'): ?>
-                    <span class="badge bg-warning text-dark">Borrowed</span>
-                  <?php else: ?>
-                    <span class="badge bg-success">Returned</span>
-                  <?php endif; ?>
+                  <?= ($status === 'pending' || $status === 'rejected') ? '—' : htmlspecialchars($row['issue_date'] ?: '—') ?>
                 </td>
+                <td>
+                  <?= ($status === 'pending' || $status === 'rejected') ? '—' : htmlspecialchars($row['return_date'] ?: '—') ?>
+                </td>
+                <td><span class="badge <?= $badge ?>"><?= ucfirst($status) ?></span></td>
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
@@ -164,10 +175,10 @@ $stud_name = $stud_name ?? 'Student';
   </div>
 </main>
 
-  <footer class="text-center py-3 mt-5">
-    <small>&copy; 2025 Library Management System | Student Dashboard</small>
-  </footer>
+<footer class="text-center py-3 mt-5">
+  <small>&copy; 2025 Library Management System | Student Dashboard</small>
+</footer>
 
-  <script src="js/bootstrap.bundle.min.js"></script>
+<script src="js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

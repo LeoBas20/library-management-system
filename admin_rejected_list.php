@@ -9,27 +9,24 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'admin')) {
 
 $uid = $_SESSION['user_id'];
 $admin_name = 'Admin';
-
-$result = mysqli_query($connection, "SELECT name FROM users WHERE user_id='$uid' AND role='admin' LIMIT 1");
-if ($row = mysqli_fetch_assoc($result)) {
-  $admin_name = $row['name'];
-}
+$r = mysqli_query($connection, "SELECT name FROM users WHERE user_id='$uid' AND role='admin' LIMIT 1");
+if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Library | Student List</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Library | Rejected Requests</title>
 
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
 </head>
-<body>
 
+<body>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
   <div class="container-fluid px-4">
@@ -44,8 +41,8 @@ if ($row = mysqli_fetch_assoc($result)) {
         <li class="nav-item"><a class="nav-link" href="admin_books.php">Books</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_borrowed_list.php">Borrowed</a></li>
         <li class="nav-item"><a class="nav-link" href="admin_pending_list.php">Request</a></li>
-        <li class="nav-item"><a class="nav-link" href="admin_rejected_list.php">Rejected</a></li>
-        <li class="nav-item"><a class="nav-link active" href="admin_student_list.php">Students</a></li>
+        <li class="nav-item"><a class="nav-link active" href="admin_rejected_list.php">Rejected</a></li>
+        <li class="nav-item"><a class="nav-link" href="admin_student_list.php">Students</a></li>
       </ul>
     </div>
 
@@ -55,7 +52,7 @@ if ($row = mysqli_fetch_assoc($result)) {
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
         <li><a class="dropdown-item" href="admin_profile.php"><i class="bi bi-person"></i> Profile</a></li>
-        <li><a class="dropdown-item" href="admin_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>
+        <li><a class="dropdown-item" href="admin_changepass.php"><i class="bi bi-gear"></i> Change Password</a></li>        
         <li><hr class="dropdown-divider"></li>
         <li><a class="dropdown-item text-danger" href="logout.php"><i class="bi bi-box-arrow-right"></i> Logout</a></li>
       </ul>
@@ -63,29 +60,41 @@ if ($row = mysqli_fetch_assoc($result)) {
   </div>
 </nav>
 
-<main class="container mt-5">
-  <h2 class="fw-bold mb-3">Students</h2>
+<main class="container my-5">
+  <h2 class="fw-bold mb-3">Rejected Book Requests</h2>
 
   <div class="table-responsive">
-    <table id="myTable" class="table table-striped table-bordered align-middle">
+    <table id="myTable" class="table table-bordered table-striped align-middle" style="width:100%;">
       <thead>
         <tr>
-          <th>Student Name</th>
-          <th>Student ID</th>
-          <th>Email</th>
+          <th>Book Title</th>
+          <th>Student</th>
+          <th>Request Date</th>
+          <th>Status</th>
         </tr>
       </thead>
       <tbody>
         <?php
-        $result = mysqli_query($connection, "SELECT user_id, name, email FROM users WHERE role='student' ORDER BY name");
-        if (mysqli_num_rows($result)) {
+        $result = mysqli_query($connection, "
+          SELECT b.title, u.name AS student, t.issue_date, t.status
+          FROM transactions t
+          INNER JOIN books_db b ON t.book_id = b.book_id
+          INNER JOIN users u ON t.user_id = u.user_id
+          WHERE t.status='rejected'
+          ORDER BY t.issue_date DESC
+        ");
+
+        if (mysqli_num_rows($result) > 0) {
           while ($row = mysqli_fetch_assoc($result)) {
-            echo "<tr>
-                    <td>" . htmlspecialchars($row['name']) . "</td>
-                    <td>" . htmlspecialchars($row['user_id']) . "</td>
-                    <td>" . htmlspecialchars($row['email']) . "</td>
-                  </tr>";
+            echo '<tr>
+                    <td>'.htmlspecialchars($row['title']).'</td>
+                    <td>'.htmlspecialchars($row['student']).'</td>
+                    <td>'.htmlspecialchars($row['issue_date']).'</td>
+                    <td><span class="badge bg-dark text-white">'.ucfirst($row['status']).'</span></td>
+                  </tr>';
           }
+        } else {
+          echo "<tr><td colspan='4' class='text-center text-danger py-3'>No rejected request.</td></tr>";
         }
         ?>
       </tbody>
@@ -101,7 +110,10 @@ if ($row = mysqli_fetch_assoc($result)) {
 <script src="js/datatables.min.js"></script>
 <script>
   $(document).ready(function() {
-    $('#myTable').DataTable();
+    $('#myTable').DataTable({
+      order: [[2, 'desc']], // sort by Request Date 
+      pageLength: 10
+    });
   });
 </script>
 
