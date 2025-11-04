@@ -76,12 +76,12 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
       <tbody>
         <?php
         $result = mysqli_query($connection, "
-          SELECT b.title, u.name AS student, t.issue_date, t.status
+          SELECT b.title, u.name AS student, t.request_date, t.status
           FROM transactions t
           INNER JOIN books_db b ON t.book_id = b.book_id
           INNER JOIN users u ON t.user_id = u.user_id
           WHERE t.status='rejected'
-          ORDER BY t.issue_date DESC
+          ORDER BY t.request_date DESC
         ");
 
         if (mysqli_num_rows($result) > 0) {
@@ -89,12 +89,10 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
             echo '<tr>
                     <td>'.htmlspecialchars($row['title']).'</td>
                     <td>'.htmlspecialchars($row['student']).'</td>
-                    <td>'.htmlspecialchars($row['issue_date']).'</td>
+                    <td>'.htmlspecialchars($row['request_date']).'</td>
                     <td><span class="badge bg-dark text-white">'.ucfirst($row['status']).'</span></td>
                   </tr>';
           }
-        } else {
-          echo "<tr><td colspan='4' class='text-center text-danger py-3'>No rejected request.</td></tr>";
         }
         ?>
       </tbody>
@@ -111,8 +109,7 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
 <script>
   $(document).ready(function() {
     $('#myTable').DataTable({
-      order: [[2, 'desc']], // sort by Request Date 
-      pageLength: 10
+      language: { emptyTable: "No rejected request." }
     });
   });
 </script>

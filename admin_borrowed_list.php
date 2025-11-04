@@ -155,7 +155,6 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
 $(document).ready(function() {
   $('#myTable').DataTable({
     order: [[3, 'desc']], // Sort by Borrowed Date
-    pageLength: 10,
     language: {
       emptyTable: "No records found."
     }

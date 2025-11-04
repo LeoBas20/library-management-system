@@ -93,9 +93,21 @@ $admin_name = $admin['name'] ?? 'Admin';
           </h5>
         </div>
         <div class="card-body">
-          <?php if (!empty($message)): ?>
-            <div class="alert alert-success py-2"><?= htmlspecialchars($message) ?></div>
-          <?php endif; ?>
+        <?php if (!empty($message)): ?>
+          <div id="alertBox" class="alert alert-success text-center py-2 position-fixed top-0 start-50 translate-middle-x mt-3" 
+              style="z-index:1055;width:350px;transition:opacity .6s;">
+            <?= htmlspecialchars($message) ?>
+          </div>
+          <script>
+            setTimeout(() => {
+              const box = document.getElementById('alertBox');
+              if (box) {
+                box.style.opacity = '0';
+                setTimeout(() => box.remove(), 600);
+              }
+            }, 1000);
+          </script>
+        <?php endif; ?>
 
           <form method="POST">
             <table class="table table-hover">

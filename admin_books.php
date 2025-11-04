@@ -237,7 +237,6 @@ if ($row = mysqli_fetch_assoc($result)) {
 $(document).ready(function() {
   $('#myTable').DataTable({
     order: [[0, 'asc']],
-    pageLength: 10,
     language: {
       emptyTable: "No books found."
     }

@@ -176,11 +176,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const hint = document.getElementById('matchHint');
 
     function validate() {
-      const okLen = newPw.value.length >= 6 && confirmPw.value.length >= 6;
-      const match = newPw.value !== '' && newPw.value === confirmPw.value;
-      btn.disabled = !(okLen && match);
-      hint.textContent = match ? 'Passwords match.' : (confirmPw.value ? 'Passwords do not match.' : '');
-      hint.className = 'form-text ' + (match ? 'text-success' : (confirmPw.value ? 'text-danger' : ''));
+      const short = newPw.value.length > 0 && newPw.value.length < 6;
+      const match = newPw.value && newPw.value === confirmPw.value;
+
+      if (short) {
+        hint.textContent = 'Password must be at least 6 characters.';
+        hint.className = 'form-text text-danger';
+      } else if (match) {
+        hint.textContent = 'Passwords match.';
+        hint.className = 'form-text text-success';
+      } else if (confirmPw.value) {
+        hint.textContent = 'Passwords do not match.';
+        hint.className = 'form-text text-danger';
+      } else {
+        hint.textContent = '';
+        hint.className = 'form-text';
+      }
+
+      btn.disabled = short || !match;
     }
 
     newPw.addEventListener('input', validate);

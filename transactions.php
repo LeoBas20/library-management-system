@@ -118,12 +118,21 @@ mysqli_query($connection, "
               'rejected' => 'bg-dark text-white',
               default    => 'bg-light text-dark'
             };
+
+            // show borrowed/due dates only for these statuses
+            $issue = in_array($status, ['borrowed', 'returned', 'overdue']) 
+              ? htmlspecialchars($row['issue_date'] ?: '—') 
+              : '—';
+            $due = in_array($status, ['borrowed', 'returned', 'overdue']) 
+              ? htmlspecialchars($row['return_date'] ?: '—') 
+              : '—';
+
             echo "<tr>
                     <td>" . htmlspecialchars($row['title']) . "</td>
                     <td>" . htmlspecialchars($row['student']) . "</td>
                     <td>" . htmlspecialchars($row['request_date']) . "</td>
-                    <td>" . htmlspecialchars($row['issue_date'] ?: '—') . "</td>
-                    <td>" . htmlspecialchars($row['return_date'] ?: '—') . "</td>
+                    <td>$issue</td>
+                    <td>$due</td>
                     <td><span class='badge $badge'>" . ucfirst($status) . "</span></td>
                   </tr>";
           }
@@ -145,8 +154,6 @@ mysqli_query($connection, "
 <script>
 $(document).ready(function() {
   $('#myTable').DataTable({
-    order: [[2, 'desc']], // Sort by request date
-    pageLength: 10,
     language: {
       emptyTable: "No transactions found."
     }
