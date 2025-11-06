@@ -72,8 +72,7 @@ if ($row = mysqli_fetch_assoc($result)) {
     </button>
   </div>
 
-  <div class="table-responsive">
-    <table id="myTable" class="table table-striped table-bordered align-middle w-100">
+    <table id="myTable" class="table table-hover table-striped table-bordered align-middle w-100">
       <thead>
         <tr>
           <th style="width:30%;">Title</th>
@@ -146,7 +145,7 @@ if ($row = mysqli_fetch_assoc($result)) {
                     </div>
                     <div class="mb-3">
                       <label class="form-label">Copies</label>
-                      <input type="number" name="copies" class="form-control" value="<?= $copies ?>" required>
+                      <input type="number" name="copies" class="form-control" value="<?= $copies ?>" min="0" required>
                     </div>
                   </div>
                   <div class="modal-footer">
@@ -159,13 +158,10 @@ if ($row = mysqli_fetch_assoc($result)) {
           </div>
         <?php
           }
-        } else {
-          echo "<tr><td colspan='6' class='text-center text-danger'>No Record Found</td></tr>";
-        }
+        } 
         ?>
       </tbody>
     </table>
-  </div>
 </main>
 
 <!-- Add Modal -->
@@ -192,7 +188,7 @@ if ($row = mysqli_fetch_assoc($result)) {
           </div>
           <div class="mb-3">
             <label class="form-label">Copies</label>
-            <input type="number" name="copies" class="form-control" required>
+            <input type="number" name="copies" class="form-control" min="0" required>
           </div>
         </div>
         <div class="modal-footer">

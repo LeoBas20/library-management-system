@@ -9,14 +9,13 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
 
 $uid = $_SESSION['user_id'];
 
-// Auto-update overdue
-mysqli_query($connection, "
-  UPDATE transactions
-  SET status = 'overdue'
-  WHERE user_id = '$uid'
-    AND status = 'borrowed'
-    AND return_date < CURDATE()
-");
+    mysqli_query($connection, "
+    UPDATE transactions
+    SET status = 'overdue'
+    WHERE user_id = '$uid'
+      AND status = 'borrowed'
+      AND return_date < CURDATE()
+  ");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -26,6 +25,7 @@ mysqli_query($connection, "
   <title>Student | Borrowed Books</title>
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
+  <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
     .container { margin-top: 50px; }
@@ -75,17 +75,17 @@ mysqli_query($connection, "
       </button>
     </div>
 
-    <table class="table table-hover table-bordered table-striped">
+    <table id="myTable" class="table table-hover table-bordered table-striped">
       <thead>
         <tr>
-          <th>Title</th>
-          <th>Author</th>
-          <th>ISBN</th>
-          <th>Request Date</th>
-          <th>Issued</th>
-          <th>Due</th>
-          <th>Days Left</th>
-          <th>Status</th>
+        <th style="width: 32%;">Title</th>
+        <th style="width: 15%;">Author</th>
+        <th style="width: 11%;">ISBN</th>
+        <th style="width: 11%;">Request Date</th>
+        <th style="width: 8%;">Issued</th>
+        <th style="width: 8%;">Due</th>
+        <th style="width: 10%;">Days Left</th>
+        <th style="width: 5%;">Status</th>
         </tr>
       </thead>
       <tbody>
@@ -98,7 +98,7 @@ mysqli_query($connection, "
                 FROM transactions t
                 INNER JOIN books_db b ON t.book_id = b.book_id
                 WHERE t.user_id = ?
-                ORDER BY FIELD(t.status, 'pending','borrowed','overdue','returned','rejected'), t.id DESC";
+                ORDER BY t.id DESC";
         $stmt = mysqli_prepare($connection, $sql);
         mysqli_stmt_bind_param($stmt, 's', $uid);
         mysqli_stmt_execute($stmt);
@@ -139,8 +139,6 @@ mysqli_query($connection, "
         </tr>
         <?php
           endwhile;
-        else:
-          echo '<tr><td colspan="8" class="text-center text-muted">No records found.</td></tr>';
         endif;
         mysqli_stmt_close($stmt);
         ?>
@@ -180,6 +178,7 @@ mysqli_query($connection, "
 </footer>
 
 <script src="js/bootstrap.bundle.min.js"></script>
+<script src="js/datatables.min.js"></script>
 <script>
 let selected = null;
 const rows = document.querySelectorAll('tbody tr.selectable');
@@ -208,5 +207,16 @@ returnBtn.addEventListener('click', e => {
   hiddenTransId.value = selected.transId;
 });
 </script>
+
+<script>
+$(document).ready(function() {
+  $('#myTable').DataTable({
+    language: {
+      emptyTable: "No books found."
+    }
+  });
+});
+</script>
+
 </body>
 </html>

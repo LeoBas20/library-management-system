@@ -65,9 +65,7 @@ if ($row = mysqli_fetch_assoc($result)) {
 
 <main class="container mt-5">
   <h2 class="fw-bold mb-3">Students</h2>
-
-  <div class="table-responsive">
-    <table id="myTable" class="table table-striped table-bordered align-middle">
+    <table id="myTable" class="table table-hover table-striped table-bordered align-middle">
       <thead>
         <tr>
           <th>Student Name</th>
@@ -90,7 +88,6 @@ if ($row = mysqli_fetch_assoc($result)) {
         ?>
       </tbody>
     </table>
-  </div>
 </main>
 
 <footer class="text-center py-3 mt-5">
@@ -100,9 +97,13 @@ if ($row = mysqli_fetch_assoc($result)) {
 <script src="js/bootstrap.bundle.min.js"></script>
 <script src="js/datatables.min.js"></script>
 <script>
-  $(document).ready(function() {
-    $('#myTable').DataTable();
+$(document).ready(function() {
+  $('#myTable').DataTable({
+    language: {
+      emptyTable: "No student records found."
+    }
   });
+});
 </script>
 
 </body>

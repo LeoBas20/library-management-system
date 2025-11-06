@@ -18,12 +18,13 @@ $uid = $_SESSION['user_id'];
   <title>Student | Books</title>
 
   <link rel="stylesheet" href="css/index.css">
+  <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   <style>
-    .container{margin-top:50px;}
-    tr.selectable{cursor:pointer;}
-    tr.selectable.table-active{outline:2px solid rgba(25,135,84,.35);}
+    .container { margin-top: 50px; }
+    tr.selectable { cursor: pointer; }
+    tr.selectable.table-active { outline: 2px solid rgba(25,135,84,.35); }
   </style>
 </head>
 
@@ -64,30 +65,23 @@ $uid = $_SESSION['user_id'];
     <div class="d-flex justify-content-between align-items-center mb-3">
       <h2 class="m-0">Books</h2>
 
-      <form method="GET" class="d-flex" role="search">
-        <input type="text" name="search" class="form-control me-2" style="width:500px;"
-               placeholder="Search books..."
-               value="<?php if(isset($_GET['search'])) echo htmlspecialchars($_GET['search']); ?>" required>
-        <button type="submit" class="btn btn-primary">Search</button>
-      </form>
-
       <button id="openBorrowBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#borrowModal" disabled>
         Borrow Book
       </button>
     </div>
 
-    <table class="table table-hover table-bordered table-striped">
+    <table id="myTable" class="table table-hover table-bordered table-striped">
       <thead>
         <tr>
-          <th>Title</th><th>Author</th><th>ISBN</th><th>Status</th><th>Copies</th>
+          <th>Title</th>
+          <th>Author</th>
+          <th>ISBN</th>
+          <th>Status</th>
+          <th>Copies</th>
         </tr>
       </thead>
       <tbody>
         <?php
-          $search = isset($_GET['search']) ? trim($_GET['search']) : '';
-          $like = "%".$connection->real_escape_string($search)."%";
-
-          // Updated: detect if book is already borrowed or pending
           $sql = "
             SELECT b.book_id, b.title, b.author, b.isbn, b.quantity,
                    CASE 
@@ -98,15 +92,13 @@ $uid = $_SESSION['user_id'];
             FROM books_db b
             LEFT JOIN transactions t
               ON b.book_id = t.book_id AND t.user_id = '$uid' AND t.status IN ('pending','borrowed')
-            " . ($search !== '' ? 
-            "WHERE b.title LIKE '$like' OR b.author LIKE '$like' OR b.isbn LIKE '$like'" : '') . "
             ORDER BY b.title";
 
           $result = $connection->query($sql);
-          if(!$result){ die('Invalid Query: '.$connection->error); }
+          if (!$result) { die('Invalid Query: '.$connection->error); }
 
           if ($result->num_rows > 0) {
-            while($row = $result->fetch_assoc()){
+            while ($row = $result->fetch_assoc()) {
               $quantity = (int)($row['quantity'] ?? 0);
               $status = ($quantity > 0) ? 'Available' : 'Not Available';
               $rid = (int)$row['book_id'];
@@ -138,13 +130,12 @@ $uid = $_SESSION['user_id'];
                       <td>'.$quantity.'</td>
                     </tr>';
             }
-          } else {
-            echo "<tr><td colspan='7' class='text-center text-danger'>No Record Found</td></tr>";
           }
         ?>
       </tbody>
     </table>
 
+    <!-- Borrow Modal -->
     <form action="borrow_book.php" method="POST">
       <div class="modal fade" id="borrowModal" tabindex="-1" aria-labelledby="borrowModalLabel" aria-hidden="true">
         <div class="modal-dialog">
@@ -164,7 +155,7 @@ $uid = $_SESSION['user_id'];
                 <label class="form-label">Quantity</label>
                 <input id="modalQty" type="number" name="qty" class="form-control" min="1" max="1" value="1" readonly required>
               </div>
-              <div class="text-muted small">Only 1 book allowed per borrow</div>
+              <div class="text-muted small">Each student may borrow only one copy of the same book.</div>
 
               <input type="hidden" id="modalBookId" name="book_id">
               <input type="hidden" id="modalAvailable" name="available">
@@ -186,12 +177,8 @@ $uid = $_SESSION['user_id'];
 </footer>
 
 <script src="js/bootstrap.bundle.min.js"></script>
-<script>
-const searchBox = document.querySelector('input[name="search"]');
-searchBox.addEventListener('input', () => {
-  if (searchBox.value === '') window.location = 'student_books.php';
-});
-</script>
+<script src="js/datatables.min.js"></script>
+
 <script>
 const rows = Array.from(document.querySelectorAll('tbody tr.selectable'));
 const borrowBtn = document.getElementById('openBorrowBtn');
@@ -222,6 +209,16 @@ borrowBtn.addEventListener('click', e => {
   hiddenBookId.value  = selected.id;
   hiddenAvail.value   = selected.available;
   qtyInput.value = 1;
+});
+</script>
+
+<script>
+$(document).ready(function() {
+  $('#myTable').DataTable({
+    language: {
+      emptyTable: "No books found."
+    }
+  });
 });
 </script>
 </body>

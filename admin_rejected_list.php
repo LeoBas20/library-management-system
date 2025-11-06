@@ -63,8 +63,7 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
 <main class="container my-5">
   <h2 class="fw-bold mb-3">Rejected Book Requests</h2>
 
-  <div class="table-responsive">
-    <table id="myTable" class="table table-bordered table-striped align-middle" style="width:100%;">
+    <table id="myTable" class="table table-hover table-bordered table-striped align-middle" style="width:100%;">
       <thead>
         <tr>
           <th>Book Title</th>
@@ -81,7 +80,7 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
           INNER JOIN books_db b ON t.book_id = b.book_id
           INNER JOIN users u ON t.user_id = u.user_id
           WHERE t.status='rejected'
-          ORDER BY t.request_date DESC
+          ORDER BY t.request_date DESC, t.id DESC
         ");
 
         if (mysqli_num_rows($result) > 0) {
@@ -97,7 +96,6 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
         ?>
       </tbody>
     </table>
-  </div>
 </main>
 
 <footer class="text-center py-3 mt-5">
@@ -109,7 +107,7 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
 <script>
   $(document).ready(function() {
     $('#myTable').DataTable({
-      language: { emptyTable: "No rejected request." }
+      language: { emptyTable: "Rejected list empty." }
     });
   });
 </script>

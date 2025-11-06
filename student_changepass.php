@@ -16,27 +16,33 @@ $student  = mysqli_fetch_assoc($query);
 $student_name = $student['name'] ?? 'student';
 $student_display = "{$student_name} ({$student['user_id']})";
 
-
-/* Handle password change (plain text version) */
+/* Handle password change (hashed version) */
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   $old = $_POST['old_password'] ?? '';
   $new = $_POST['new_password'] ?? '';
   $conf = $_POST['confirm_password'] ?? '';
 
+  if ($new !== $conf) {
+    header('Location: student_changepass.php?msg=nomatch');
+    exit;
+  }
+
   $res = mysqli_query($connection, "SELECT password FROM users WHERE user_id='$uid' AND role='student' LIMIT 1");
   $row = mysqli_fetch_assoc($res);
 
-  if (!$row || $old !== $row['password']) {
+  if (!$row || !password_verify($old, $row['password'])) {
     header('Location: student_changepass.php?msg=incorrect');
     exit;
-  } else {
-    $update = mysqli_query($connection, "UPDATE users SET password='$new' WHERE user_id='$uid' AND role='student'");
-    header('Location: student_changepass.php?msg=' . ($update ? 'updated' : 'failed'));
-    exit;
   }
-}
 
+  $hashed = password_hash($new, PASSWORD_DEFAULT);
+  $update = mysqli_query($connection, "UPDATE users SET password='$hashed' WHERE user_id='$uid' AND role='student'");
+
+  header('Location: student_changepass.php?msg=' . ($update ? 'updated' : 'failed'));
+  exit;
+}
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -47,6 +53,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   <link rel="stylesheet" href="css/index.css">
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
+  <style>
+  .toggle-password.btn-outline-secondary:hover {
+  background-color: transparent;
+  color: inherit;
+  box-shadow: none;
+  }
+  </style>
 </head>
 
 <body>
@@ -99,7 +113,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       </ul>
     </div>
 
-    <!-- Right: Dropdown -->
     <div class="dropdown ms-3">
       <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
               type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -128,16 +141,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Old Password -->
         <div class="mb-3">
           <div class="input-group" style="max-width: 400px;">
-            <input type="password" name="old_password" class="form-control" placeholder="Old Password" required>
             <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input type="password" name="old_password" id="old_password" class="form-control" placeholder="Old Password" required>
+            <button type="button"
+                    class="btn btn-outline-secondary toggle-password"
+                    style="border-color: var(--bs-border-color);"
+                    data-target="old_password">
+              <i class="bi bi-eye"></i>
+            </button>
           </div>
         </div>
 
         <!-- New Password -->
         <div class="mb-3">
           <div class="input-group" style="max-width: 400px;">
-            <input type="password" name="new_password" id="new_password" class="form-control" placeholder="New Password" minlength="6" required>
             <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input type="password" name="new_password" id="new_password" class="form-control" placeholder="New Password" minlength="6" required>
+            <button type="button"
+                    class="btn btn-outline-secondary toggle-password"
+                    style="border-color: var(--bs-border-color);"
+                    data-target="new_password">
+              <i class="bi bi-eye"></i>
+            </button>
           </div>
           <div class="form-text">Use at least 6 characters.</div>
         </div>
@@ -145,12 +170,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Confirm Password -->
         <div class="mb-2">
           <div class="input-group" style="max-width: 400px;">
-            <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm Password" minlength="6" required>
             <span class="input-group-text"><i class="bi bi-key"></i></span>
+            <input type="password" name="confirm_password" id="confirm_password" class="form-control" placeholder="Confirm Password" minlength="6" required>
+            <button type="button"
+                    class="btn btn-outline-secondary toggle-password"
+                    style="border-color: var(--bs-border-color);"
+                    data-target="confirm_password">
+              <i class="bi bi-eye"></i>
+            </button>
           </div>
           <div id="matchHint" class="form-text"></div>
         </div>
-
       </div>
 
       <div class="card-footer bg-light d-flex justify-content-between align-items-center">
@@ -160,8 +190,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 </main>
 
+<footer class="text-center py-3 mt-5">
+  <small>&copy; 2025 Library Management System | Student Dashboard</small>
+</footer>
+
+<script src="js/bootstrap.bundle.min.js"></script>
+
 <script>
-  // Enable button only when new/confirm match and fields are filled
+  // Show/hide password toggle
+  document.querySelectorAll('.toggle-password').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.target);
+      const icon = btn.querySelector('i');
+      const isHidden = target.type === 'password';
+      target.type = isHidden ? 'text' : 'password';
+      icon.className = isHidden ? 'bi bi-eye-slash' : 'bi bi-eye';
+    });
+  });
+
+  // Match validation
   (function () {
     const newPw = document.getElementById('new_password');
     const confirmPw = document.getElementById('confirm_password');
@@ -169,11 +216,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     const hint = document.getElementById('matchHint');
 
     function validate() {
-      const okLen = newPw.value.length >= 6 && confirmPw.value.length >= 6;
-      const match = newPw.value !== '' && newPw.value === confirmPw.value;
-      btn.disabled = !(okLen && match);
-      hint.textContent = match ? 'Passwords match.' : (confirmPw.value ? 'Passwords do not match.' : '');
-      hint.className = 'form-text ' + (match ? 'text-success' : (confirmPw.value ? 'text-danger' : ''));
+      const short = newPw.value.length > 0 && newPw.value.length < 6;
+      const match = newPw.value && newPw.value === confirmPw.value;
+
+      if (short) {
+        hint.textContent = 'Password must be at least 6 characters.';
+        hint.className = 'form-text text-danger';
+      } else if (match) {
+        hint.textContent = 'Passwords match.';
+        hint.className = 'form-text text-success';
+      } else if (confirmPw.value) {
+        hint.textContent = 'Passwords do not match.';
+        hint.className = 'form-text text-danger';
+      } else {
+        hint.textContent = '';
+        hint.className = 'form-text';
+      }
+
+      btn.disabled = short || !match;
     }
 
     newPw.addEventListener('input', validate);
@@ -182,10 +242,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   })();
 </script>
 
-<footer class="text-center py-3 mt-5">
-  <small>&copy; 2025 Library Management System | Student Dashboard</small>
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

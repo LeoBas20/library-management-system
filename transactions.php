@@ -77,13 +77,12 @@ mysqli_query($connection, "
 </nav>
 
 <!-- Main Content -->
-<main class="container my-4">
+<main class="container my-5">
   <div class="d-flex justify-content-between align-items-center mb-3">
     <h2 class="fw-bold mb-0">All Transactions</h2>
   </div>
 
-  <div class="table-responsive">
-    <table id="myTable" class="table table-striped table-bordered align-middle w-100">
+    <table id="myTable" class="table table-hover table-striped table-bordered align-middle w-100">
       <thead>
         <tr>
           <th style="width:35%;">Book Title</th>
@@ -136,13 +135,10 @@ mysqli_query($connection, "
                     <td><span class='badge $badge'>" . ucfirst($status) . "</span></td>
                   </tr>";
           }
-        } else {
-          echo "<tr><td colspan='6' class='text-center text-muted py-3'>No transactions found.</td></tr>";
         }
         ?>
       </tbody>
     </table>
-  </div>
 </main>
 
 <footer class="text-center py-3 mt-5">

@@ -83,10 +83,9 @@ if ($row = mysqli_fetch_assoc($result)) {
   <?php endif; ?>
   <?php endif; ?>
 
-  <h2 class="fw-bold mb-3">Pending Book Requests</h2>
+    <h2 class="fw-bold mb-3">Pending Book Requests</h2>
 
-  <div class="table-responsive">
-    <table id="myTable" class="table table-striped table-bordered align-middle" style="width:100%;">
+    <table id="myTable" class="table table-hover table-striped table-bordered align-middle">
       <thead>
         <tr>
           <th>Book Title</th>
@@ -109,7 +108,7 @@ if ($row = mysqli_fetch_assoc($result)) {
           INNER JOIN books_db b ON t.book_id = b.book_id
           INNER JOIN users u ON t.user_id = u.user_id
           WHERE t.status = 'pending'
-          ORDER BY t.request_date DESC
+          ORDER BY t.request_date DESC, t.id DESC
         ");
 
         if (mysqli_num_rows($result) > 0) {
@@ -148,7 +147,6 @@ if ($row = mysqli_fetch_assoc($result)) {
         ?>
       </tbody>
     </table>
-  </div>
 </main>
 
 <!-- Approve Modal -->
@@ -194,13 +192,12 @@ if ($row = mysqli_fetch_assoc($result)) {
 <script>
 $(document).ready(function() {
   $('#myTable').DataTable({
-    order: [[2, 'desc']], // Sort by Request Date
-    pageLength: 10,
     language: {
-      emptyTable: "No pending requests found."
+      emptyTable: "No pending request."
     }
   });
 });
+
 
 const approveModal = document.getElementById('approveModal');
 if (approveModal) {

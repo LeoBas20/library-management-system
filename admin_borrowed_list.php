@@ -27,7 +27,6 @@ $status = $_GET['status'] ?? 'borrowed';
 $allowed_status = ['borrowed', 'overdue'];
 if (!in_array($status, $allowed_status)) $status = 'borrowed';
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -39,11 +38,9 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-
-
 </head>
-<body>
 
+<body>
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
   <div class="container-fluid px-4">
@@ -64,7 +61,8 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
     </div>
 
     <div class="dropdown ms-3">
-      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+      <button class="btn btn-outline-dark btn-sm dropdown-toggle d-flex align-items-center" 
+              type="button" data-bs-toggle="dropdown" aria-expanded="false">
         <i class="bi bi-person-circle me-1"></i> <?= htmlspecialchars($admin_name) ?>
       </button>
       <ul class="dropdown-menu dropdown-menu-end">
@@ -78,33 +76,31 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
 </nav>
 
 <!-- Main Content -->
-<main class="container my-5">
-  <div>
-    <div class="mb-3">
-      <h2 class="fw-bold mb-2">Borrowed Books</h2>
-
-      <div class="book-filter">
-        <form method="GET" class="m-0">
-          <select name="status" class="form-select form-select-sm shadow-sm" 
-            style="width:180px;" onchange="this.form.submit()">
-            <option value="borrowed" <?= $status === 'borrowed' ? 'selected' : '' ?>>Borrowed</option>
-            <option value="overdue" <?= $status === 'overdue' ? 'selected' : '' ?>>Overdue</option>
-          </select>
-        </form>
-      </div>
+<main>
+  <div class="container my-5">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="fw-bold mb-0">Borrowed Books</h2>
+      <form method="GET" class="m-0">
+        <select name="status"
+                class="form-select form-select-sm shadow-sm w-auto"
+                style="min-width: 150px;"
+                onchange="this.form.submit()">
+          <option value="borrowed" <?= $status === 'borrowed' ? 'selected' : '' ?>>Borrowed</option>
+          <option value="overdue" <?= $status === 'overdue' ? 'selected' : '' ?>>Overdue</option>
+        </select>
+      </form>
     </div>
 
-    <div class="table-responsive">
-      <table id="myTable" class="table table-striped table-bordered align-middle" style="width:100%;">
+      <table id="myTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%;">
         <thead>
-        <tr>
-          <th style="width:40%;">Title</th>
-          <th style="width:17%;">Student</th>
-          <th style="width:11%;">Request Date</th>
-          <th style="width:12%;">Borrowed Date</th>
-          <th style="width:10%;">Due Date</th>
-          <th style="width:10%;">Status</th>
-        </tr>
+          <tr>
+            <th style="width:40%;">Title</th>
+            <th style="width:17%;">Student</th>
+            <th style="width:11%;">Request Date</th>
+            <th style="width:12%;">Borrowed Date</th>
+            <th style="width:10%;">Due Date</th>
+            <th style="width:10%;">Status</th>
+          </tr>
         </thead>
         <tbody>
           <?php
@@ -141,7 +137,6 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
           ?>
         </tbody>
       </table>
-    </div>
   </div>
 </main>
 
@@ -154,13 +149,9 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
 <script>
 $(document).ready(function() {
   $('#myTable').DataTable({
-    order: [[3, 'desc']], // Sort by Borrowed Date
-    language: {
-      emptyTable: "No records found."
-    }
+    language: { emptyTable: "No records found." }
   });
 });
 </script>
-
 </body>
 </html>

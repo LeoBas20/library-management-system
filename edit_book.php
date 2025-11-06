@@ -13,9 +13,9 @@ if (!isset($_POST['update_book'])) {
 }
 
 $id     = (int)$_POST['id'];
-$title  = trim($_POST['title']);
-$author = trim($_POST['author']);
-$isbn   = trim($_POST['isbn']);
+$title  = mysqli_real_escape_string($connection, trim($_POST['title']));
+$author = mysqli_real_escape_string($connection, trim($_POST['author']));
+$isbn   = mysqli_real_escape_string($connection, trim($_POST['isbn']));
 $copies = (int)$_POST['copies'];
 
 if (!$id || !$title || !$author || !$isbn) {

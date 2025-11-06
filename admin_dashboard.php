@@ -144,7 +144,7 @@ $total_students = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) 
     </div>
 
     <div class="table-responsive mt-3">
-      <table class="table table-striped table-bordered align-middle">
+      <table class="table table-hover table-striped table-bordered align-middle">
         <thead class="table-light">
           <tr>
             <th style="width: 45%;">Book Title</th>
@@ -190,7 +190,7 @@ $total_students = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) 
               </tr>
             <?php endwhile; ?>
           <?php else: ?>
-            <tr><td colspan="5" class="text-center text-muted py-3">No recent transactions found.</td></tr>
+            <tr><td colspan="5" class="text-center text-muted py-3">No recent transactions.</td></tr>
           <?php endif; ?>
         </tbody>
       </table>
