@@ -16,7 +16,6 @@ if ($row = mysqli_fetch_assoc($result)) {
   $admin_name = $row['name'];
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,6 +27,11 @@ if ($row = mysqli_fetch_assoc($result)) {
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .container { margin-top: 50px; }
+    .alert-container { transition: opacity 0.6s ease; }
+    .fade-out { opacity: 0; }
+  </style>
 </head>
 <body>
 
@@ -79,74 +83,85 @@ if ($row = mysqli_fetch_assoc($result)) {
     <div class="alert-container position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1055;width:350px;">
       <div class="alert alert-<?= $type ?> text-center py-2 m-0 shadow-sm"><?= $text ?></div>
     </div>
-    <script>setTimeout(() => document.querySelector('.alert-container')?.remove(), 2500);</script>
-  <?php endif; ?>
-  <?php endif; ?>
-
-    <h2 class="fw-bold mb-3">Pending Book Requests</h2>
-
-    <table id="myTable" class="table table-hover table-striped table-bordered align-middle">
-      <thead>
-        <tr>
-          <th>Book Title</th>
-          <th>Student</th>
-          <th>Request Date</th>
-          <th>Status</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $result = mysqli_query($connection, "
-          SELECT 
-            t.id AS transaction_id,
-            b.title, 
-            u.name AS student, 
-            t.request_date,
-            t.status
-          FROM transactions t
-          INNER JOIN books_db b ON t.book_id = b.book_id
-          INNER JOIN users u ON t.user_id = u.user_id
-          WHERE t.status = 'pending'
-          ORDER BY t.request_date DESC, t.id DESC
-        ");
-
-        if (mysqli_num_rows($result) > 0) {
-          while ($row = mysqli_fetch_assoc($result)) {
-            $id = (int)$row['transaction_id'];
-            echo '<tr>
-                    <td>' . htmlspecialchars($row['title']) . '</td>
-                    <td>' . htmlspecialchars($row['student']) . '</td>
-                    <td>' . htmlspecialchars($row['request_date']) . '</td>
-                    <td><span class="badge bg-secondary">' . ucfirst($row['status']) . '</span></td>
-                    <td class="text-center">
-                      <div class="d-flex justify-content-center gap-2">
-                        <button 
-                          type="button" 
-                          class="btn btn-success btn-sm"
-                          data-bs-toggle="modal" 
-                          data-bs-target="#approveModal"
-                          data-id="' . $id . '"
-                          data-title="' . htmlspecialchars($row['title'], ENT_QUOTES) . '"
-                          data-student="' . htmlspecialchars($row['student'], ENT_QUOTES) . '"
-                          title="Approve">
-                          <i class="bi bi-check-circle"></i>
-                        </button>
-                        <a 
-                          href="admin_reject_request.php?id=' . $id . '"
-                          class="btn btn-danger btn-sm"
-                          onclick="return confirm(\'Reject this request?\');"
-                          title="Reject">
-                          <i class="bi bi-x-circle"></i>
-                        </a>
-                      </div>
-                    </td>
-                  </tr>';
-          }
+    <script>
+      setTimeout(() => {
+        const alertBox = document.querySelector('.alert-container');
+        if (alertBox) {
+          alertBox.classList.add('fade-out');
+          setTimeout(() => alertBox.remove(), 600);
         }
-        ?>
-      </tbody>
-    </table>
+        const url = new URL(window.location);
+        url.searchParams.delete('msg');
+        window.history.replaceState({}, '', url);
+      }, 1800);
+    </script>
+  <?php endif; ?>
+  <?php endif; ?>
+
+  <h2 class="fw-bold mb-3">Pending Book Requests</h2>
+
+  <table id="myTable" class="table table-hover table-striped table-bordered align-middle">
+    <thead>
+      <tr>
+        <th style="width:40%;">Book Title</th>
+        <th style="width:20%;">Student</th>
+        <th style="width:20%;">Request Date</th>
+        <th style="width:10%;">Status</th>
+        <th style="width:10%;">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      $result = mysqli_query($connection, "
+        SELECT 
+          t.id AS transaction_id,
+          b.title, 
+          u.name AS student, 
+          t.request_date,
+          t.status
+        FROM transactions t
+        INNER JOIN books_db b ON t.book_id = b.book_id
+        INNER JOIN users u ON t.user_id = u.user_id
+        WHERE t.status = 'pending'
+        ORDER BY t.request_date DESC, t.id DESC
+      ");
+
+      if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+          $id = (int)$row['transaction_id'];
+          echo '<tr>
+                  <td>' . htmlspecialchars($row['title']) . '</td>
+                  <td>' . htmlspecialchars($row['student']) . '</td>
+                  <td>' . htmlspecialchars($row['request_date']) . '</td>
+                  <td class="text-center"><span class="badge bg-secondary">' . ucfirst($row['status']) . '</span></td>
+                  <td class="text-center">
+                    <div class="d-flex justify-content-center gap-2">
+                      <button 
+                        type="button" 
+                        class="btn btn-success btn-sm"
+                        data-bs-toggle="modal" 
+                        data-bs-target="#approveModal"
+                        data-id="' . $id . '"
+                        data-title="' . htmlspecialchars($row['title'], ENT_QUOTES) . '"
+                        data-student="' . htmlspecialchars($row['student'], ENT_QUOTES) . '"
+                        title="Approve">
+                        <i class="bi bi-check-circle"></i>
+                      </button>
+                      <a 
+                        href="admin_reject_request.php?id=' . $id . '"
+                        class="btn btn-danger btn-sm"
+                        onclick="return confirm(\'Reject this request?\');"
+                        title="Reject">
+                        <i class="bi bi-x-circle"></i>
+                      </a>
+                    </div>
+                  </td>
+                </tr>';
+        }
+      }
+      ?>
+    </tbody>
+  </table>
 </main>
 
 <!-- Approve Modal -->
@@ -169,8 +184,8 @@ if ($row = mysqli_fetch_assoc($result)) {
           </div>
 
           <div class="mb-3">
-            <label for="modal-return-date" class="form-label">Return Date</label>
-            <input type="date" name="return_date" id="modal-return-date" class="form-control" required>
+            <label for="modal-due-date" class="form-label">Due Date</label>
+            <input type="date" name="due_date" id="modal-due-date" class="form-control" required>
           </div>
         </div>
 
@@ -192,12 +207,9 @@ if ($row = mysqli_fetch_assoc($result)) {
 <script>
 $(document).ready(function() {
   $('#myTable').DataTable({
-    language: {
-      emptyTable: "No pending request."
-    }
+    language: { emptyTable: "No pending requests." }
   });
 });
-
 
 const approveModal = document.getElementById('approveModal');
 if (approveModal) {
@@ -208,10 +220,11 @@ if (approveModal) {
     const student = btn.getAttribute('data-student');
     approveModal.querySelector('#modal-transaction-id').value = id;
     approveModal.querySelector('#modal-context').textContent = `Approve: "${title}" for ${student}`;
-    const today = new Date().toISOString().slice(0,10);
-    const plus7 = new Date(Date.now() + 7*24*3600*1000).toISOString().slice(0,10);
-    approveModal.querySelector('#modal-issue-date').value = today;
-    approveModal.querySelector('#modal-return-date').value = plus7;
+    const today = new Date();
+    const due = new Date();
+    due.setDate(today.getDate() + 7);
+    approveModal.querySelector('#modal-issue-date').value = today.toLocaleDateString('en-CA');
+    approveModal.querySelector('#modal-due-date').value = due.toLocaleDateString('en-CA');
   });
 }
 </script>

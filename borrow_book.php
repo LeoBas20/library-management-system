@@ -16,20 +16,32 @@ if ($bid <= 0) {
   exit;
 }
 
-// check if already pending or borrowed
+/* Mark any overdue books before checking */
+mysqli_query($connection, "
+  UPDATE transactions
+  SET status = 'overdue'
+  WHERE user_id = '$uid'
+    AND status = 'borrowed'
+    AND due_date < CURDATE()
+    AND return_date IS NULL
+");
+
+/* Check if already pending, borrowed, or overdue */
 $check = mysqli_query($connection, "
   SELECT 1 FROM transactions 
-  WHERE user_id='$uid' AND book_id=$bid AND status IN ('pending','borrowed')
+  WHERE user_id = '$uid' 
+    AND book_id = $bid 
+    AND status IN ('pending','borrowed','overdue')
 ");
 if (mysqli_num_rows($check) > 0) {
   header('Location: student_books.php?err=exists');
   exit;
 }
 
-// insert pending request
+/* Insert pending request (no issue/due/return date yet) */
 $sql = "
-  INSERT INTO transactions (user_id, book_id, qty, issue_date, return_date, status)
-  VALUES ('$uid', $bid, $qty, CURDATE(), DATE_ADD(CURDATE(), INTERVAL 7 DAY), 'pending')
+  INSERT INTO transactions (user_id, book_id, qty, request_date, status)
+  VALUES ('$uid', $bid, $qty, CURDATE(), 'pending')
 ";
 if (mysqli_query($connection, $sql)) {
   header('Location: student_books.php?msg=pending');

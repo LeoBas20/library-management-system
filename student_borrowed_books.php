@@ -9,13 +9,15 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
 
 $uid = $_SESSION['user_id'];
 
-    mysqli_query($connection, "
-    UPDATE transactions
-    SET status = 'overdue'
-    WHERE user_id = '$uid'
-      AND status = 'borrowed'
-      AND return_date < CURDATE()
-  ");
+/* Mark overdue books */
+mysqli_query($connection, "
+  UPDATE transactions
+  SET status = 'overdue'
+  WHERE user_id = '$uid'
+    AND status = 'borrowed'
+    AND due_date < CURDATE()
+    AND return_date IS NULL
+");
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -35,6 +37,37 @@ $uid = $_SESSION['user_id'];
 </head>
 
 <body>
+
+<?php if (isset($_GET['msg'])): ?>
+  <?php
+    $messages = [
+      'returned' => ['Book successfully returned.', 'success']
+    ];
+    [$text, $type] = $messages[$_GET['msg']] ?? [null, null];
+  ?>
+  <?php if ($text): ?>
+    <style>
+      .alert-container { transition: opacity 0.6s ease; }
+      .fade-out { opacity: 0; }
+    </style>
+    <div class="alert-container position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:1055;width:350px;">
+      <div class="alert alert-<?= $type ?> text-center py-2 m-0 shadow-sm"><?= $text ?></div>
+    </div>
+    <script>
+      setTimeout(() => {
+        const alertBox = document.querySelector('.alert-container');
+        if (alertBox) {
+          alertBox.classList.add('fade-out');
+          setTimeout(() => alertBox.remove(), 600);
+        }
+        const url = new URL(window.location);
+        url.searchParams.delete('msg');
+        window.history.replaceState({}, '', url);
+      }, 1500);
+    </script>
+  <?php endif; ?>
+<?php endif; ?>
+
 <!-- Navbar -->
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
   <div class="container-fluid px-4">
@@ -77,24 +110,25 @@ $uid = $_SESSION['user_id'];
 
     <table id="myTable" class="table table-hover table-bordered table-striped">
       <thead>
-        <tr>
-        <th style="width: 32%;">Title</th>
-        <th style="width: 15%;">Author</th>
-        <th style="width: 11%;">ISBN</th>
+      <tr>
+        <th style="width: 27%;">Title</th>
+        <th style="width: 12%;">Author</th>
+        <th style="width: 12%;">ISBN</th>
         <th style="width: 11%;">Request Date</th>
         <th style="width: 8%;">Issued</th>
         <th style="width: 8%;">Due</th>
-        <th style="width: 10%;">Days Left</th>
+        <th style="width: 8%;">Returned</th>
+        <th style="width: 9%;">Days Left</th>
         <th style="width: 5%;">Status</th>
-        </tr>
+      </tr>
       </thead>
       <tbody>
         <?php
         $sql = "SELECT 
                   t.id AS transaction_id, t.book_id,
                   b.title, b.author, b.isbn,
-                  t.request_date, t.issue_date, t.return_date, t.status,
-                  DATEDIFF(t.return_date, CURDATE()) AS days_left
+                  t.request_date, t.issue_date, t.due_date, t.return_date, t.status,
+                  DATEDIFF(t.due_date, CURDATE()) AS days_left
                 FROM transactions t
                 INNER JOIN books_db b ON t.book_id = b.book_id
                 WHERE t.user_id = ?
@@ -107,9 +141,9 @@ $uid = $_SESSION['user_id'];
         if (mysqli_num_rows($result) > 0):
           while ($row = mysqli_fetch_assoc($result)):
             $status = $row['status'];
-            $isBorrowed = ($status === 'borrowed');
-            $trClass = $isBorrowed ? 'selectable' : '';
-            $dataAttr = $isBorrowed
+            $isSelectable = ($status === 'borrowed' || $status === 'overdue');
+            $trClass = $isSelectable ? 'selectable' : '';
+            $dataAttr = $isSelectable
               ? ' data-book-id="'.(int)$row['book_id'].'"
                   data-trans-id="'.(int)$row['transaction_id'].'"
                   data-book-title="'.htmlspecialchars($row['title'], ENT_QUOTES).'"'
@@ -119,14 +153,22 @@ $uid = $_SESSION['user_id'];
           <td><?= htmlspecialchars($row['title']) ?></td>
           <td><?= htmlspecialchars($row['author']) ?></td>
           <td><?= htmlspecialchars($row['isbn']) ?></td>
-          <td><?= htmlspecialchars($row['request_date']) ?></td>
-          <td>
-            <?= ($status === 'pending' || $status === 'rejected') ? '—' : ($row['issue_date'] ?: '—') ?>
+          <td style="text-align:center;"><?= htmlspecialchars($row['request_date']) ?></td>
+          <td style="text-align:center;"><?= ($status === 'pending' || $status === 'rejected') ? '—' : ($row['issue_date'] ?: '—') ?></td>
+          <td style="text-align:center;"><?= ($status === 'pending' || $status === 'rejected') ? '—' : ($row['due_date'] ?: '—') ?></td>
+          <td style="text-align:center;"><?= ($status === 'returned' && $row['return_date']) ? htmlspecialchars($row['return_date']) : '—' ?></td>
+          <td style="text-align:center;">
+            <?php
+              // Blank if overdue and show days left only if borrowed
+              if ($status === 'borrowed') {
+                echo max(0, $row['days_left']).' day(s)';
+              } elseif ($status === 'overdue') {
+                echo '—';
+              } else {
+                echo '—';
+              }
+            ?>
           </td>
-          <td>
-            <?= ($status === 'pending' || $status === 'rejected') ? '—' : ($row['return_date'] ?: '—') ?>
-          </td>
-          <td><?= $isBorrowed ? max(0, $row['days_left']).' day(s)' : '—' ?></td>
           <td>
             <?php
               if ($status === 'pending')   echo '<span class="badge bg-secondary">Pending</span>';
@@ -211,9 +253,7 @@ returnBtn.addEventListener('click', e => {
 <script>
 $(document).ready(function() {
   $('#myTable').DataTable({
-    language: {
-      emptyTable: "No books found."
-    }
+    language: { emptyTable: "No books found." }
   });
 });
 </script>

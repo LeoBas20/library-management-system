@@ -89,7 +89,7 @@ if ($row = mysqli_fetch_assoc($r)) $admin_name = $row['name'];
                     <td>'.htmlspecialchars($row['title']).'</td>
                     <td>'.htmlspecialchars($row['student']).'</td>
                     <td>'.htmlspecialchars($row['request_date']).'</td>
-                    <td><span class="badge bg-dark text-white">'.ucfirst($row['status']).'</span></td>
+                    <td class="text-center"><span class="badge bg-dark text-white">'.ucfirst($row['status']).'</span></td>
                   </tr>';
           }
         }

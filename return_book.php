@@ -7,34 +7,45 @@ if (empty($_SESSION['user_id']) || (($_SESSION['role'] ?? '') !== 'student')) {
   exit;
 }
 
-if (!isset($_POST['return_submit'])) {
+if (empty($_POST['return_submit'])) {
   header('Location: student_borrowed_books.php');
   exit;
 }
 
 $uid = $_SESSION['user_id'];
-$tid = (int)($_POST['transaction_id'] ?? 0);
-$bid = (int)($_POST['book_id'] ?? 0);
+$tid = (int)$_POST['transaction_id'];
+$bid = (int)$_POST['book_id'];
 
-if (!$tid || !$bid) {
-  header('Location: student_borrowed_books.php?msg=invalid');
-  exit;
+/* Validate transaction — allow borrowed or overdue */
+$res = mysqli_query($connection, "
+  SELECT qty FROM transactions 
+  WHERE id = $tid 
+    AND user_id = '$uid' 
+    AND book_id = $bid 
+    AND status IN ('borrowed','overdue')
+  LIMIT 1
+");
+
+if ($res && mysqli_num_rows($res) > 0) {
+  $row = mysqli_fetch_assoc($res);
+  $qty = (int)$row['qty'];
+
+/* Update transaction: mark returned and set return_date */
+  mysqli_query($connection, "
+    UPDATE transactions 
+    SET status = 'returned', return_date = CURDATE()
+    WHERE id = $tid
+      AND status IN ('borrowed','overdue')
+    LIMIT 1
+  ");
+
+  mysqli_query($connection, "
+    UPDATE books_db 
+    SET quantity = quantity + $qty 
+    WHERE book_id = $bid
+    LIMIT 1
+  ");
 }
-
-// Check if valid borrowed transaction
-$res = mysqli_query($connection, "SELECT qty FROM transactions 
-                                  WHERE id=$tid AND user_id='$uid' 
-                                  AND book_id=$bid AND status='borrowed' LIMIT 1");
-$row = mysqli_fetch_assoc($res);
-if (!$row) {
-  header('Location: student_borrowed_books.php?msg=notfound');
-  exit;
-}
-
-$qty = (int)$row['qty'];
-
-mysqli_query($connection, "UPDATE transactions SET status='returned' WHERE id=$tid");
-mysqli_query($connection, "UPDATE books_db SET quantity = quantity + $qty WHERE book_id=$bid");
 
 header('Location: student_borrowed_books.php?msg=returned');
 exit;

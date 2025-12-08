@@ -2,7 +2,6 @@
 session_start();
 include('dbcon.php');
 
-// Only admins allowed
 if (empty($_SESSION['user_id']) || ($_SESSION['role'] ?? '') !== 'admin') {
   header('Location: admin_login.php');
   exit;

@@ -16,16 +16,21 @@ if ($row = mysqli_fetch_assoc($result)) {
   $admin_name = $row['name'];
 }
 
-// Automatically mark overdue books
-mysqli_query($connection, "UPDATE transactions 
-                           SET status='overdue' 
-                           WHERE status='borrowed' 
-                           AND return_date < CURDATE()");
+// Automatically mark overdue books (fixed: use due_date)
+mysqli_query($connection, "
+  UPDATE transactions 
+  SET status = 'overdue' 
+  WHERE status = 'borrowed' 
+    AND due_date < CURDATE()
+    AND return_date IS NULL
+");
 
 // Determine status filter (borrowed by default)
 $status = $_GET['status'] ?? 'borrowed';
 $allowed_status = ['borrowed', 'overdue'];
-if (!in_array($status, $allowed_status)) $status = 'borrowed';
+if (!in_array($status, $allowed_status)) {
+  $status = 'borrowed';
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -38,6 +43,10 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
   <link rel="stylesheet" href="css/bootstrap.min.css">
   <link rel="stylesheet" href="css/datatables.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    .container { margin-top: 50px; }
+    table.dataTable thead th { white-space: nowrap; }
+  </style>
 </head>
 
 <body>
@@ -91,52 +100,52 @@ if (!in_array($status, $allowed_status)) $status = 'borrowed';
       </form>
     </div>
 
-      <table id="myTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%;">
-        <thead>
-          <tr>
-            <th style="width:40%;">Title</th>
-            <th style="width:17%;">Student</th>
-            <th style="width:11%;">Request Date</th>
-            <th style="width:12%;">Borrowed Date</th>
-            <th style="width:10%;">Due Date</th>
-            <th style="width:10%;">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          <?php
-          $query = "
-            SELECT 
-              b.title,
-              u.name AS student,
-              t.request_date,
-              t.issue_date,
-              t.return_date,
-              t.status
-            FROM transactions t
-            INNER JOIN books_db b ON t.book_id = b.book_id
-            INNER JOIN users u ON t.user_id = u.user_id
-            WHERE t.status = '$status'
-            ORDER BY t.issue_date DESC
-          ";
+    <table id="myTable" class="table table-hover table-striped table-bordered align-middle" style="width:100%;">
+      <thead>
+        <tr>
+          <th style="width:40%;">Title</th>
+          <th style="width:17%;">Student</th>
+          <th style="width:11%;">Request Date</th>
+          <th style="width:12%;">Borrowed Date</th>
+          <th style="width:10%;">Due Date</th>
+          <th style="width:10%;">Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <?php
+        $query = "
+          SELECT 
+            b.title,
+            u.name AS student,
+            t.request_date,
+            t.issue_date,
+            t.due_date,
+            t.status
+          FROM transactions t
+          INNER JOIN books_db b ON t.book_id = b.book_id
+          INNER JOIN users u ON t.user_id = u.user_id
+          WHERE t.status = '$status'
+          ORDER BY t.issue_date DESC
+        ";
 
-          $result = mysqli_query($connection, $query);
+        $result = mysqli_query($connection, $query);
 
-          if (mysqli_num_rows($result) > 0) {
-            while ($row = mysqli_fetch_assoc($result)) {
-              $badgeClass = ($row['status'] === 'overdue') ? 'bg-danger' : 'bg-warning text-dark';
-              echo '<tr>
-                      <td>' . htmlspecialchars($row['title']) . '</td>
-                      <td>' . htmlspecialchars($row['student']) . '</td>
-                      <td>' . htmlspecialchars($row['request_date']) . '</td>
-                      <td>' . htmlspecialchars($row['issue_date']) . '</td>
-                      <td>' . htmlspecialchars($row['return_date']) . '</td>
-                      <td><span class="badge ' . $badgeClass . '">' . ucfirst($row['status']) . '</span></td>
-                    </tr>';
-            }
+        if (mysqli_num_rows($result) > 0) {
+          while ($row = mysqli_fetch_assoc($result)) {
+            $badgeClass = ($row['status'] === 'overdue') ? 'bg-danger text-white' : 'bg-warning text-dark';
+            echo '<tr>
+                    <td>' . htmlspecialchars($row['title']) . '</td>
+                    <td>' . htmlspecialchars($row['student']) . '</td>
+                    <td>' . htmlspecialchars($row['request_date']) . '</td>
+                    <td>' . htmlspecialchars($row['issue_date'] ?: '—') . '</td>
+                    <td>' . htmlspecialchars($row['due_date'] ?: '—') . '</td>
+                    <td class="text-center"><span class="badge ' . $badgeClass . '">' . ucfirst($row['status']) . '</span></td>
+                  </tr>';
           }
-          ?>
-        </tbody>
-      </table>
+        }
+        ?>
+      </tbody>
+    </table>
   </div>
 </main>
 

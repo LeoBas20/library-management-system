@@ -60,6 +60,31 @@ $uid = $_SESSION['user_id'];
   </div>
 </nav>
 
+<?php if (isset($_GET['msg']) && $_GET['msg'] === 'pending'): ?>
+  <style>
+    .alert-container { transition: opacity 0.6s ease; }
+    .fade-out { opacity: 0; }
+  </style>
+  <div class="alert-container position-fixed top-0 start-50 translate-middle-x mt-3" 
+       style="z-index:1055;width:350px;">
+    <div class="alert alert-success text-center py-2 m-0 shadow-sm">
+      Book request sent successfully! Waiting for approval.
+    </div>
+  </div>
+  <script>
+    setTimeout(() => {
+      const alertBox = document.querySelector('.alert-container');
+      if (alertBox) {
+        alertBox.classList.add('fade-out');
+        setTimeout(() => alertBox.remove(), 600);
+      }
+      const url = new URL(window.location);
+      url.searchParams.delete('msg');
+      window.history.replaceState({}, '', url);
+    }, 2000);
+  </script>
+<?php endif; ?>
+
 <main>
   <div class="container">
     <div class="d-flex justify-content-between align-items-center mb-3">
@@ -72,13 +97,13 @@ $uid = $_SESSION['user_id'];
 
     <table id="myTable" class="table table-hover table-bordered table-striped">
       <thead>
-        <tr>
-          <th>Title</th>
-          <th>Author</th>
-          <th>ISBN</th>
-          <th>Status</th>
-          <th>Copies</th>
-        </tr>
+      <tr>
+        <th style="width: 51%;">Title</th>
+        <th style="width: 20%;">Author</th>
+        <th style="width: 12%;">ISBN</th>
+        <th style="width: 12%;">Status</th>
+        <th style="width: 5%;">Copies</th>
+      </tr>
       </thead>
       <tbody>
         <?php
@@ -125,9 +150,9 @@ $uid = $_SESSION['user_id'];
                         '.$disabled.'>
                       <td>'.$rtitle.'</td>
                       <td>'.$rauthor.'</td>
-                      <td>'.$risbn.'</td>
-                      <td>'.$display_status.'</td>
-                      <td>'.$quantity.'</td>
+                      <td style="text-align:center;">'.$risbn.'</td>
+                      <td style="text-align:center;">'.$display_status.'</td>
+                      <td style="text-align:center;">'.$quantity.'</td>
                     </tr>';
             }
           }

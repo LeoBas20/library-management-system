@@ -16,12 +16,13 @@ if ($row = mysqli_fetch_assoc($result)) {
   $admin_name = $row['name'];
 }
 
-// Automatically update overdue books
+// Automatically update overdue books (fixed: use due_date instead of return_date)
 mysqli_query($connection, "
   UPDATE transactions
   SET status = 'overdue'
   WHERE status = 'borrowed'
-    AND return_date < CURDATE()
+    AND due_date < CURDATE()
+    AND return_date IS NULL
 ");
 ?>
 
@@ -82,63 +83,68 @@ mysqli_query($connection, "
     <h2 class="fw-bold mb-0">All Transactions</h2>
   </div>
 
-    <table id="myTable" class="table table-hover table-striped table-bordered align-middle w-100">
-      <thead>
-        <tr>
-          <th style="width:35%;">Book Title</th>
-          <th style="width:20%;">Student</th>
-          <th style="width:12%;">Request Date</th>
-          <th style="width:12%;">Date Borrowed</th>
-          <th style="width:12%;">Due Date</th>
-          <th style="width:9%;">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        <?php
-        $query = "
-          SELECT 
-            t.*, b.title, u.name AS student
-          FROM transactions t
-          JOIN books_db b ON t.book_id = b.book_id
-          JOIN users u ON t.user_id = u.user_id
-          ORDER BY t.id DESC
-        ";
+  <table id="myTable" class="table table-hover table-striped table-bordered align-middle w-100">
+    <thead>
+      <tr>
+        <th style="width:40%;">Book Title</th>
+        <th style="width:15%;">Student</th>
+        <th style="width:10%;">Request Date</th>
+        <th style="width:10%;">Date Borrowed</th>
+        <th style="width:10%;">Due Date</th>
+        <th style="width:10%;">Return Date</th>
+        <th style="width:5%;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      <?php
+      $query = "
+        SELECT 
+          t.*, b.title, u.name AS student
+        FROM transactions t
+        JOIN books_db b ON t.book_id = b.book_id
+        JOIN users u ON t.user_id = u.user_id
+        ORDER BY t.id DESC
+      ";
 
-        $result = mysqli_query($connection, $query);
+      $result = mysqli_query($connection, $query);
 
-        if (mysqli_num_rows($result) > 0) {
-          while ($row = mysqli_fetch_assoc($result)) {
-            $status = strtolower($row['status']);
-            $badge = match($status) {
-              'pending'  => 'bg-secondary text-white',
-              'borrowed' => 'bg-warning text-dark',
-              'returned' => 'bg-success text-white',
-              'overdue'  => 'bg-danger text-white',
-              'rejected' => 'bg-dark text-white',
-              default    => 'bg-light text-dark'
-            };
+      if (mysqli_num_rows($result) > 0) {
+        while ($row = mysqli_fetch_assoc($result)) {
+          $status = strtolower($row['status']);
+          $badge = match($status) {
+            'pending'  => 'bg-secondary text-white',
+            'borrowed' => 'bg-warning text-dark',
+            'returned' => 'bg-success text-white',
+            'overdue'  => 'bg-danger text-white',
+            'rejected' => 'bg-dark text-white',
+            default    => 'bg-light text-dark'
+          };
 
-            // show borrowed/due dates only for these statuses
-            $issue = in_array($status, ['borrowed', 'returned', 'overdue']) 
-              ? htmlspecialchars($row['issue_date'] ?: '—') 
-              : '—';
-            $due = in_array($status, ['borrowed', 'returned', 'overdue']) 
-              ? htmlspecialchars($row['return_date'] ?: '—') 
-              : '—';
+          // Borrowed / due / return display
+          $issue = in_array($status, ['borrowed', 'returned', 'overdue']) 
+            ? htmlspecialchars($row['issue_date'] ?: '—') 
+            : '—';
+          $due = in_array($status, ['borrowed', 'returned', 'overdue']) 
+            ? htmlspecialchars($row['due_date'] ?: '—') 
+            : '—';
+          $returned = ($status === 'returned') 
+            ? htmlspecialchars($row['return_date'] ?: '—') 
+            : '—';
 
-            echo "<tr>
-                    <td>" . htmlspecialchars($row['title']) . "</td>
-                    <td>" . htmlspecialchars($row['student']) . "</td>
-                    <td>" . htmlspecialchars($row['request_date']) . "</td>
-                    <td>$issue</td>
-                    <td>$due</td>
-                    <td><span class='badge $badge'>" . ucfirst($status) . "</span></td>
-                  </tr>";
-          }
+          echo "<tr>
+                  <td>" . htmlspecialchars($row['title']) . "</td>
+                  <td>" . htmlspecialchars($row['student']) . "</td>
+                  <td>" . htmlspecialchars($row['request_date']) . "</td>
+                  <td>$issue</td>
+                  <td>$due</td>
+                  <td>$returned</td>
+                  <td class='text-center'><span class='badge $badge'>" . ucfirst($status) . "</span></td>
+                </tr>";
         }
-        ?>
-      </tbody>
-    </table>
+      }
+      ?>
+    </tbody>
+  </table>
 </main>
 
 <footer class="text-center py-3 mt-5">

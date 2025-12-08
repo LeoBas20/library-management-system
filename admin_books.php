@@ -74,14 +74,14 @@ if ($row = mysqli_fetch_assoc($result)) {
 
     <table id="myTable" class="table table-hover table-striped table-bordered align-middle w-100">
       <thead>
-        <tr>
-          <th style="width:30%;">Title</th>
-          <th style="width:20%;">Author</th>
-          <th style="width:15%;">ISBN</th>
-          <th style="width:15%;">Status</th>
-          <th style="width:10%;">Copies</th>
-          <th style="width:10%;" class="text-center">Action</th>
-        </tr>
+      <tr>
+        <th style="width:52%;">Title</th>
+        <th style="width:12%;">Author</th>
+        <th style="width:11%;">ISBN</th>
+        <th style="width:10%;">Status</th>
+        <th style="width:5%;">Copies</th>
+        <th style="width:10%;" class="text-center">Action</th>
+      </tr>
       </thead>
       <tbody>
         <?php
@@ -206,7 +206,8 @@ if ($row = mysqli_fetch_assoc($result)) {
       'added'   => ['Book added successfully.', 'success'],
       'updated' => ['Book updated successfully.', 'success'],
       'deleted' => ['Book deleted successfully.', 'danger'],
-      'failed'  => ['Action failed.', 'danger']
+      'failed'  => ['Action failed.', 'danger'],
+      'duplicate' => ['ISBN already exists.', 'danger']
     ];
     [$text, $type] = $messages[$_GET['msg']] ?? [null, null];
   ?>

@@ -1,5 +1,5 @@
 <?php
-include('dbcon.php'); // make sure this defines $connection (not returned as int)
+include('dbcon.php');
 
 $token = $_GET["token"] ?? null;
 if (!$token) {
@@ -10,7 +10,7 @@ $token_hash = hash("sha256", $token);
 
 $sql = "SELECT * FROM users WHERE reset_token_hash = ?";
 
-$stmt = $connection->prepare($sql); // use the same variable name as in dbcon.php
+$stmt = $connection->prepare($sql); 
 $stmt->bind_param("s", $token_hash);
 $stmt->execute();
 

@@ -14,12 +14,12 @@ $admin_name = 'Admin';
 $result = mysqli_query($connection, "SELECT name FROM users WHERE user_id='$uid' AND role='admin' LIMIT 1");
 if ($row = mysqli_fetch_assoc($result)) $admin_name = $row['name'];
 
-// Automatically update overdue books
 mysqli_query($connection, "
   UPDATE transactions
   SET status = 'overdue'
   WHERE status = 'borrowed'
-    AND return_date < CURDATE()
+    AND due_date < CURDATE()
+    AND return_date IS NULL
 ");
 
 // Counts
@@ -147,10 +147,10 @@ $total_students = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) 
       <table class="table table-hover table-striped table-bordered align-middle">
         <thead class="table-light">
           <tr>
-            <th style="width: 45%;">Book Title</th>
+            <th style="width: 50;">Book Title</th>
             <th style="width: 20%;">Student</th>
             <th style="width: 15%;">Date Borrowed</th>
-            <th style="width: 15%;">Due Date</th>
+            <th style="width: 10%;">Due Date</th>
             <th style="width: 5%;">Status</th>
           </tr>
         </thead>
@@ -172,8 +172,8 @@ $total_students = mysqli_fetch_assoc(mysqli_query($connection, "SELECT COUNT(*) 
                 <td><?= htmlspecialchars($row['title']) ?></td>
                 <td><?= htmlspecialchars($row['student']) ?></td>
                 <td><?= ($row['status'] === 'pending' || $row['status'] === 'rejected') ? '—' : htmlspecialchars($row['issue_date'] ?: '—') ?></td>
-                <td><?= ($row['status'] === 'pending' || $row['status'] === 'rejected') ? '—' : htmlspecialchars($row['return_date'] ?: '—') ?></td>
-                <td>
+                <td><?= ($row['status'] === 'pending' || $row['status'] === 'rejected') ? '—' : htmlspecialchars($row['due_date'] ?: '—') ?></td>
+                <td class="text-center">
                   <?php
                     $status = strtolower($row['status']);
                     $badge = match($status) {

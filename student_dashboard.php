@@ -17,16 +17,16 @@ mysqli_stmt_bind_result($stmt, $user_id, $stud_name);
 mysqli_stmt_fetch($stmt);
 mysqli_stmt_close($stmt);
 
-$user_id = $user_id ?? $uid;
 $stud_name = $stud_name ?? 'Student';
 
-// Auto-update overdue
+// Auto-update overdue (fixed: use due_date instead of return_date)
 mysqli_query($connection, "
   UPDATE transactions
   SET status = 'overdue'
   WHERE user_id = '$uid'
     AND status = 'borrowed'
-    AND return_date < CURDATE()
+    AND due_date < CURDATE()
+    AND return_date IS NULL
 ");
 
 // Counts
@@ -148,11 +148,11 @@ $total_overdue  = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM trans
               <?php
               $status = strtolower($row['status']);
               $badge = match($status) {
-              'pending'  => 'bg-secondary text-white', 
-              'borrowed' => 'bg-warning text-dark',     
-              'returned' => 'bg-success text-white',    
-              'overdue'  => 'bg-danger text-white',      
-              'rejected' => 'bg-dark text-white'
+                'pending'  => 'bg-secondary text-white', 
+                'borrowed' => 'bg-warning text-dark',     
+                'returned' => 'bg-success text-white',    
+                'overdue'  => 'bg-danger text-white',      
+                'rejected' => 'bg-dark text-white'
               };
               ?>
               <tr>
@@ -161,7 +161,7 @@ $total_overdue  = mysqli_num_rows(mysqli_query($connection, "SELECT * FROM trans
                   <?= ($status === 'pending' || $status === 'rejected') ? '—' : htmlspecialchars($row['issue_date'] ?: '—') ?>
                 </td>
                 <td>
-                  <?= ($status === 'pending' || $status === 'rejected') ? '—' : htmlspecialchars($row['return_date'] ?: '—') ?>
+                  <?= ($status === 'pending' || $status === 'rejected') ? '—' : htmlspecialchars($row['due_date'] ?: '—') ?>
                 </td>
                 <td><span class="badge <?= $badge ?>"><?= ucfirst($status) ?></span></td>
               </tr>
